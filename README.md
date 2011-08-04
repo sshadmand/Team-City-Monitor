@@ -1,7 +1,11 @@
 TeamCty Monitor
 ===============
 
-For internal use only. Creates a dashboard for our C.I. Server for all prjects and records and displays their coverage over time.
+ Creates a dashboard for our C.I. Server for all prjects and records and displays their coverage over time.
+
+This script is built to run on Google AppEngine, checks against a TeamCity Server install, and expects that each project in team city has code coverage outputted to it’s artifacts folder.
+
+
 
 Contributing
 ------------
