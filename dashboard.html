@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="refresh" content="60">
+	<title>dashboard</title>
+	<LINK REL=StyleSheet HREF="/styles/main.css" TYPE="text/css" MEDIA=screen>
+		<script type="text/javascript" src="http://www.google.com/jsapi?key={{google_api_key}}"></script> 
+
+		<script type="text/javascript"> 
+		google.load('visualization', '1', {'packages':['corechart']});
+		google.setOnLoadCallback(initCharts);
+
+		function initCharts() {
+			id = document.getElementById('chart1')
+			var raw_data = {{coverage_graph}};
+			var time = {{graph_range}};
+			drawVisualization(raw_data, time, "builds", id)
+		}  
+
+		function drawVisualization(raw_data, time, time_label, id) {
+		  var data = new google.visualization.DataTable();
+		  data.addColumn('string', time_label);
+		  for (var i = 0; i  < raw_data.length; ++i) {data.addColumn('number', raw_data[i][0]);}
+		  data.addRows(time.length);
+		  if (time != null){for (var j = 0; j < time.length; ++j) {data.setValue(j, 0, time[j].toString());}}
+		  for (var i = 0; i  < raw_data.length; ++i) {for (var j = 1; j  < raw_data[i].length; ++j) {data.setValue(j-1, i+1, raw_data[i][j]);}}
+		  options = {
+						backgroundColor: {fill:"#232526", stroke:"#000"}, 
+						gridlineColor: "#555",
+						hAxis: {color:"#555", textStyle: {color: '#555'}},
+						legend: "right",
+						legendTextStyle: {color:"#555"},
+						chartArea: {left:"25", top:"5", bottom:"0", height:"150", width:"690"},
+						title:"", 
+						interpolateNulls: true,
+						width:920, 
+						height:175, 
+						vAxis: {textStyle: {color: '#555'} }
+					}
+		  new google.visualization.LineChart(id).
+		      draw(data,options);
+		}
+
+		</script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+		<script>
+		//init
+		$(document).ready(function() {
+	 	});//document ready
+		</script>
+</head>
+<body>
+<div id="ajax-status"></div>
+<div id="last-updated">{{last_loaded}}</div>
+<ol class='stats'>
+	{% for project in projects %}
+	<li {{project.coverage_color_state}} {%ifequal forloop.counter 4 %}style="clear:both;"{%endifequal%}>
+		<div class="mod-header">
+			<p><a href="{{project.ned_url}}" target="_blank">{{project.name}}</a></p>
+		</div>
+		<div class="mod-body" >
+			<p class="coverage"><span style='color:{{project.coverage_color}};'>{{project.coverage}}%</span></p>
+			<p class="coverage-diff">
+				<img src="/images/ico_{{project.change_is}}_x.png" style="height:22px">
+				<span title="average over the last 7 reports">{{project.avg_coverage_change}}</span>
+			</p>
+			<p style="clear:both;">{{project.build_status}}</p>
+		</div>
+		<div class="mod-footer">
+			<p>
+				<span class="view"><a href="{{project.coverage_url}}" target="_blank">Report</a></span>
+			</p>
+		</div>
+	</li>
+	{% endfor %}
+	<li style="width:945px;">
+		<div class="mod-header">
+			<p>Build Coverage Chart</p>
+		</div>
+		<div class="mod-body" >
+			<div id="chart1"></div>
+		</div>
+		<div class="mod-footer">
+			<p>
+				<span class="view"><a href="#" target="_blank">Report</a></span>
+			</p>
+		</div>
+	</li>
+</ol>
+<br style="clear:both;">
+<p>Brought to you by the developers of Socialize, Inc. <a href="http://www.getsocialize.com">http://www.getsocialize.com</a></p>
+{{append_siren}}
+</body>
+</html>

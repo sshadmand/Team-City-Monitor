@@ -1,0 +1,13 @@
+<html>
+<head>
+<title>CI Monitor</title>
+</head>
+<frameset rows="200,*" frameborder="0" border="0" framespacing="0">
+	<frame name="reloader" src="reloader" marginheight="0" marginwidth="0" scrolling="auto" noresize>
+	<frame name="coverage_report" src="coverage_report" marginheight="0" marginwidth="0" scrolling="auto" noresize>
+	
+<noframes>
+You have no frames
+</noframes>
+</frameset>
+</html>
