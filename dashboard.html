@@ -62,11 +62,13 @@
 			<p><a href="{{project.ned_url}}" target="_blank">{{project.name}}</a></p>
 		</div>
 		<div class="mod-body" >
+			{% if project.show_coverage %}
 			<p class="coverage"><span style='color:{{project.coverage_color}};'>{{project.coverage}}%</span></p>
 			<p class="coverage-diff">
 				<img src="/images/ico_{{project.change_is}}_x.png" style="height:22px">
 				<span title="average over the last 7 reports">{{project.avg_coverage_change}}</span>
 			</p>
+			{%endif%}
 			<p style="clear:both;">{{project.build_status}}</p>
 		</div>
 		<div class="mod-footer">

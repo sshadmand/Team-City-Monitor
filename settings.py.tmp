@@ -1,3 +1,5 @@
+EMAIL_SENDER = "Team City Monitor <you@you.com>"
+
 #Your TeamCity Base URL. No trailing slash. Example: http://www.yourname.com
 BASE_TC_URL = "http://www.yourdomain.com"
 
@@ -10,7 +12,9 @@ TC_PW = "..."
 EMBED_SOUND_HTML = """<embed src="yoursound.wav"  autoplay="true" autostart="True" type="audio/wav" style="width:1px;height:1px" loop="true" />"""
 
 #List of TeamCity build ids that you want to track
+TRACK_STATUS_ONLY_BUILD_IDS = ["bt19"]
 TRACKED_BUILD_IDS = ["bt2", "bt4", "bt5", "bt6", "bt7", "bt8"]
+TRACKED_BUILD_IDS.extend(TRACK_STATUS_ONLY_BUILD_IDS)
 
 #Google API key used to generate graphs. 
 #You may need to generate your own if you have not already done so on google

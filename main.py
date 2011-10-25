@@ -57,7 +57,7 @@ from google.appengine.ext import db
 from google.appengine.ext.webapp import template
 import datetime
 import settings
-
+import emailer
 
 #TODO: should be called BuildLog
 class Project(db.Model):
@@ -159,10 +159,13 @@ def get_latest_builds():
 		p.filter('build_type =', bt)
 		p.order('-build_number')
 		build = p.fetch(1)
+		
 		if build:			
 			builds.append(build[0])
 		else:
 			builds.append(Project(build_type=bt))
+		
+		    
 	return builds
 		
 class CheckForUpdate(webapp.RequestHandler):
@@ -224,6 +227,8 @@ class CheckForUpdate(webapp.RequestHandler):
 					project.coverage_color = "yellow"				
 
 				project.put()
+			elif project.build_status != "problem":
+			    emailer.send_build_error_email(project)
 			
 	def get(self):
 		#if there has been a build since the last save
@@ -279,7 +284,8 @@ class CoverageReport(webapp.RequestHandler):
 	def get(self):
 		projects = get_latest_builds()
 		for project in projects:
-			
+			if not (project.build_type in settings.TRACK_STATUS_ONLY_BUILD_IDS):
+			    project.show_coverage = True
 			append_siren = ""
 			#create alerts (visual and audio) if there is a failure
 			if project.build_status != "SUCCESS":
