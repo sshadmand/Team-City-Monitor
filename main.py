@@ -289,18 +289,18 @@ class CoverageReport(webapp.RequestHandler):
 			append_siren = ""
 			#create alerts (visual and audio) if there is a failure
 			if project.build_status != "SUCCESS":
-				project.coverage_color_state = "style='background: red;border: 2px solid darkRed'"
+				project.coverage_color_state = "style='background: red;border: 2px solid darkRed;margin: 9px;'"
 				project.coverage_color = "#FF9999"
 				append_siren = self.get_siren_embed();
 
 			project.ned_url = """%s/viewType.html?buildTypeId=%s&tab=buildTypeStatusDiv""" % (settings.BASE_TC_URL, project.build_type)
 			
-		coverage_graph, graph_range = self.get_coverage_graph()
+		#coverage_graph, graph_range = self.get_coverage_graph()
 		template_values = {
 		             'projects': projects,
 					 'append_siren': append_siren,
-					 'coverage_graph': coverage_graph,
-					 'graph_range': graph_range,
+					 #'coverage_graph': coverage_graph,
+					 #'graph_range': graph_range,
 					 'google_api_key': settings.GOOGLE_API_KEY,
 					 'last_loaded': datetime.datetime.now().strftime("%b %d %I:%M %p ")
 		         }

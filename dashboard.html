@@ -4,14 +4,14 @@
 <html lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<meta http-equiv="refresh" content="60">
+	<meta http-equiv="refresh" content="300">
 	<title>dashboard</title>
 	<LINK REL=StyleSheet HREF="/styles/main.css" TYPE="text/css" MEDIA=screen>
 		<script type="text/javascript" src="http://www.google.com/jsapi?key={{google_api_key}}"></script> 
 
 		<script type="text/javascript"> 
-		google.load('visualization', '1', {'packages':['corechart']});
-		google.setOnLoadCallback(initCharts);
+		//google.load('visualization', '1', {'packages':['corechart']});
+		//google.setOnLoadCallback(initCharts);
 
 		function initCharts() {
 			id = document.getElementById('chart1')
@@ -47,9 +47,11 @@
 		</script>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
 		<script>
-		//init
+
 		$(document).ready(function() {
-	 	});//document ready
+			//onready
+	 	});
+
 		</script>
 </head>
 <body>
@@ -78,6 +80,7 @@
 		</div>
 	</li>
 	{% endfor %}
+	{%comment%}
 	<li style="width:945px;">
 		<div class="mod-header">
 			<p>Build Coverage Chart</p>
@@ -91,6 +94,7 @@
 			</p>
 		</div>
 	</li>
+	{%endcomment%}
 </ol>
 <br style="clear:both;">
 <p>Brought to you by the developers of Socialize, Inc. <a href="http://www.getsocialize.com">http://www.getsocialize.com</a></p>

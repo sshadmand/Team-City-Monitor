@@ -1,5 +1,5 @@
 cron:
 - description: Check for updates to build early morning
   url: /api/check_for_update
-  schedule: every 1 minutes from 10:00 to 20:00
+  schedule: mon,tues,wed,thu,fri every 5 minutes from 10:00 to 20:00
   timezone: America/Tijuana
