@@ -151,26 +151,6 @@ def get_code_coverage(projects):
 
 def get_build_ids_to_track():
     return settings.TRACKED_BUILD_IDS
-
-#### NEEDS IMPROVEMENT ######
-#Many Datastore reads peroformed here
-#and need to be reduced
-def get_latest_builds_DEPRECATED():
-    bts = get_build_ids_to_track()
-    builds = []
-    for bt in bts:
-        p = db.Query(Project)
-        p.filter('build_type =', bt)
-        p.order('-build_number')
-        build = p.fetch(1)
-        
-        if build:           
-            builds.append(build[0])
-        else:
-            builds.append(Project(build_type=bt))
-        
-            
-    return builds
     
 def get_latest_builds(as_list=True):
     bts = get_build_ids_to_track()
@@ -215,18 +195,10 @@ class CheckForUpdate(webapp.RequestHandler):
         else:
             return True
 
-
-    #### NEEDS IMPROVEMENT ######
-    #Many Datastore reads peroformed here
-    #and need to be reduced
     def update_projects(self, builds_dict):
-        
-
-        
         projects = get_all_build_states()
         projects = get_code_coverage(projects)
         for project in projects:
-            
             
             #if there has been a build since the last save
             same_build = False
@@ -237,8 +209,6 @@ class CheckForUpdate(webapp.RequestHandler):
                     print "same build"
                     print project.build_type
                     same_build = True
-
-                    
             
             #only persist when there are no duplicates in db
             #and there are no problems getting build info
