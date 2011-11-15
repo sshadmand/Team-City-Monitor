@@ -150,7 +150,10 @@ def get_code_coverage(projects):
 
 def get_build_ids_to_track():
 	return settings.TRACKED_BUILD_IDS
-	
+
+#### NEEDS IMPROVEMENT ######
+#Many Datastore reads peroformed here
+#and need to be reduced
 def get_latest_builds():
 	bts = get_build_ids_to_track()
 	builds = []
@@ -181,7 +184,11 @@ class CheckForUpdate(webapp.RequestHandler):
 			return response
 		else:
 			return True
-	
+
+
+    #### NEEDS IMPROVEMENT ######
+    #Many Datastore reads peroformed here
+    #and need to be reduced
 	def update_projects(self):
 		projects = get_all_build_states()
 		projects = get_code_coverage(projects)
@@ -249,6 +256,9 @@ class CoverageReport(webapp.RequestHandler):
 		embed = settings.EMBED_SOUND_HTML
 		return embed
 
+    #### NEEDS IMPROVEMENT ######
+    #Many Datastore reads peroformed here
+    #and need to be reduced
 	def get_coverage_graph(self):
 		bts = get_build_ids_to_track()
 		longest_list_length = 0
