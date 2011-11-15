@@ -60,3 +60,10 @@ indexes:
   - name: build_type
   - name: date
     direction: desc
+
+- kind: Project
+  properties:
+  - name: build_type
+  - name: latest
+  - name: build_number
+    direction: desc
