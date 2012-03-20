@@ -76,6 +76,8 @@ class Project(db.Model):
     coverage_color_state = ""
     ned_url = ""
     latest = db.BooleanProperty(default=False)
+    def to_dict(self):
+        return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
 
 def get_url_as_soup(theurl):
     try:
@@ -128,7 +130,7 @@ def get_code_coverage(projects):
             #Coverage reports are different for each platform.
             
             #PYTHON/Django based coverage
-            if project.build_type in ["bt6"]: 
+            if project.build_type in ["bt6", "bt28"]: 
                 project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/index.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)     
                 soup = get_url_as_soup(project.coverage_url)
                 if soup:
@@ -358,6 +360,44 @@ class MainHandler(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.out.write(template.render(path, template_values))
 
+
+def get_date_from_string(date_str):
+    dt = None
+    if "-" in date_str:
+        import time
+        if ":" in date_str:
+            struct = time.strptime(date_str, "%Y-%m-%d %H:%M")
+        else:
+            struct = time.strptime(date_str, "%Y-%m-%d")
+        from time import mktime
+        dt = datetime.datetime.fromtimestamp(mktime(struct))
+    return dt
+    
+class QueryData(webapp.RequestHandler):
+    def get(self):
+        import json
+        import simplejson
+        import time
+        #GET FILTERS
+        start_date = self.request.get("start_date")
+        end_date = self.request.get("end_date")
+        start_date = get_date_from_string(start_date)
+        end_date = get_date_from_string(end_date)
+        
+        #QUERY DATA
+        query = db.Query(Project)
+
+        if start_date:
+            query = query.filter("date >", start_date)
+        if end_date:
+            query = query.filter("date <", end_date)
+        
+        entities = query
+        final_json = {"meta":{"total_count":query.count()},"objects":[]}
+        for entity in entities:
+            final_json["objects"].append(entity)
+        self.response.out.write( json.encode(final_json) )
+    
 def main():
     application = webapp.WSGIApplication([
                                         #('/', MainHandler),
@@ -365,6 +405,7 @@ def main():
                                         ('/coverage_report', CoverageReport),
                                         ('/reloader', Reloader),
                                         ('/api/check_for_update', CheckForUpdate),
+                                        ('/query_data', QueryData)
                                         ],
                                          debug=True)
     util.run_wsgi_app(application)
