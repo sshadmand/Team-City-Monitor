@@ -420,7 +420,7 @@ class QueryData(webapp.RequestHandler):
 
 def get_getsat_open_items():
     data = None
-    url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&status=none,pending,active&style=problem,question"
+    url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&style=problem,question&needs_attention=true"
     result = urlfetch.fetch(url)
     if result.status_code == 200:
       data = json.loads(result.content)
