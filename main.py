@@ -350,7 +350,7 @@ class CoverageReport(webapp.RequestHandler):
             last_active = time.mktime(time.strptime(get_sat["data"][0]["last_active_at"], "%Y/%m/%d %H:%M:%S +0000"))
             last_active = now - datetime.datetime.fromtimestamp(last_active)
             last_active_hours = last_active.seconds/60/60
-            status = """<span style="color:yellow;vertical-align: middle;">%s OPEN ITEMS</span><span style="font-size:12px;vertical-align:middle;padding-left:5px;color:#ccc;"> (%sH)</span>""" % (get_sat["total"], last_active_hours)
+            status = """<span style="color:yellow;vertical-align: middle;">%s OPEN TOPICS</span><span style="font-size:12px;vertical-align:middle;padding-left:5px;color:#ccc;"> (%sH)</span>""" % (get_sat["total"], last_active_hours)
         gs_proj = Project(name="GetSatisfaction Support Status", build_status=status, coverage_url=gs_url, ned_url="sadf")
         projects.append(gs_proj)
         template_values = {
