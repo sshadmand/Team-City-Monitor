@@ -50,6 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE, DAMMIT.
 """
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
+import time
 import urllib2, urllib
 from BeautifulSoup import BeautifulSoup
 import re, os
@@ -58,6 +59,8 @@ from google.appengine.ext.webapp import template
 import datetime
 import settings
 import emailer
+from google.appengine.api import urlfetch
+from django.utils import simplejson as json
 
 #TODO: should be called BuildLog
 class Project(db.Model):
@@ -337,6 +340,19 @@ class CoverageReport(webapp.RequestHandler):
             project.ned_url = """%s/viewType.html?buildTypeId=%s&tab=buildTypeStatusDiv""" % (settings.BASE_TC_URL, project.build_type)
             
         #coverage_graph, graph_range = self.get_coverage_graph()
+        
+        get_sat = get_getsat_open_items()
+        gs_url = "http://support.getsocialize.com/socialize/admin/topics?sort=&direction=&raw_query=&participating_users=&created_at_start=05%2F17%2F2011&created_at_end=06%2F05%2F2012&needs_attention=true&style=&status=&emotion=&product=&commit=Apply"
+        status = "NO OPEN TOPICS"
+
+        if get_sat and len(get_sat) > 0:
+            now = datetime.datetime.now() - datetime.timedelta(hours=7)
+            last_active = time.mktime(time.strptime(get_sat["data"][0]["last_active_at"], "%Y/%m/%d %H:%M:%S +0000"))
+            last_active = now - datetime.datetime.fromtimestamp(last_active)
+            last_active_hours = last_active.seconds/60/60
+            status = """<span style="color:yellow;vertical-align: middle;">%s OPEN ITEMS</span><span style="font-size:12px;vertical-align:middle;padding-left:5px;color:#ccc;"> (%sH)</span>""" % (get_sat["total"], last_active_hours)
+        gs_proj = Project(name="GetSatisfaction Support Status", build_status=status, coverage_url=gs_url, ned_url="sadf")
+        projects.append(gs_proj)
         template_values = {
                      'projects': projects,
                      'append_siren': append_siren,
@@ -397,7 +413,36 @@ class QueryData(webapp.RequestHandler):
         for entity in entities:
             final_json["objects"].append(entity)
         self.response.out.write( json.encode(final_json) )
+
+
+def get_getsat_open_items():
+    data = None
+    url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&status=none,pending,active&style=problem,question"
+    result = urlfetch.fetch(url)
+    if result.status_code == 200:
+      data = json.loads(result.content)
+    return data
     
+def send_getsat_post(content, topic_id=2700076):
+    username = ""
+    password = ""
+
+    credentials = "%s:%s" % (username, password)
+    credentials = base64.b64encode( credentials.encode() )
+    credentials = credentials.decode("ascii")
+    headers = {'Authorization': "Basic " + credentials, "Content-type": "application/json"}
+
+    data = """{"reply": { "content" :"%s"}}""" % content
+
+    conn = httplib.HTTPConnection("api.getsatisfaction.com")
+    conn.request("POST", "/topics/%s/replies" % topic_id, data, headers)
+    response = conn.getresponse()
+
+    data = response.read()
+    conn.close()
+    return data
+
+
 def main():
     application = webapp.WSGIApplication([
                                         #('/', MainHandler),
