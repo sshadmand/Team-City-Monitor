@@ -437,7 +437,7 @@ def get_getsat_modules(return_raw_json=False):
       if return_raw_json:
           projects.append(open_data)
       else:
-          projects.append(create_getsat_module(open_data, "Open"))
+          projects.append(create_getsat_module(open_data, "Open", warning_time_limit_hours=168, problem_time_limit_hours=288))
 
     return projects
 
@@ -450,17 +450,23 @@ def clean_getsat_data(data):
     data["data"] = sorted(data["data"], key=lambda x: x["last_active_at"] )
     return data
 
-def create_getsat_module(data, type_name):
+def create_getsat_module(data, type_name, warning_time_limit_hours=24, problem_time_limit_hours=48):
     status = "NO TOPICS"
     now = datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))    
     if data and len(data["data"]) > 0:
       last_active = now - data["data"][0]["last_active_at"]
       last_active_hours = last_active.seconds/60/60
-      last_active_hours = last_active_hours + (last_active.days*24)
-      color = "yellow"
-      if last_active_hours > 24:
+      last_active_total_hours = last_active_hours + (last_active.days*24)
+      last_active_days = last_active.days
+      color = "green"
+      if last_active_total_hours > warning_time_limit_hours:
+          color = "yellow"
+      if last_active_total_hours > problem_time_limit_hours:
           color = "red"
-      status = """<span style="color:%s;vertical-align: middle;">%s %s TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;">(%sH)</span></span>""" % (color, data["total"], type_name.upper(), last_active_hours)
+      last_active_human = "%sD:%sH" % (str(last_active_days), str(last_active_hours) )
+      if last_active_total_hours < 48:
+          last_active_human = "%sH" % (str(last_active_total_hours) )          
+      status = """<span style="color:%s;vertical-align: middle;">%s %s TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;">(%s)</span></span>""" % (color, data["total"], type_name.upper(), last_active_human)
     gs_proj = Project(name="GetSatisfaction Support (%s Topics)" % type_name, build_status=status, coverage_url="/getsat_list", ned_url="sadf")
     return gs_proj
     
