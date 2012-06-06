@@ -341,21 +341,9 @@ class CoverageReport(webapp.RequestHandler):
             
         #coverage_graph, graph_range = self.get_coverage_graph()
         
-        get_sat = get_getsat_open_items()
-        gs_url = "http://support.getsocialize.com/socialize/admin/topics?sort=&direction=&raw_query=&participating_users=&created_at_start=05%2F17%2F2011&created_at_end=06%2F05%2F2012&needs_attention=true&style=&status=&emotion=&product=&commit=Apply"
-        status = "NO OPEN TOPICS"
-
-        if get_sat and len(get_sat) > 0:
-            now = datetime.datetime.now() - datetime.timedelta(hours=7)
-            last_active = time.mktime(time.strptime(get_sat["data"][0]["last_active_at"], "%Y/%m/%d %H:%M:%S +0000"))
-            last_active = now - datetime.datetime.fromtimestamp(last_active)
-            last_active_hours = last_active.seconds/60/60
-            color = "yellow"
-            if last_active_hours > 24:
-                color = "red"
-            status = """<span style="color:%s;vertical-align: middle;">%s OPEN TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;"> (%sH)</span></span>""" % (color, get_sat["total"], last_active_hours)
-        gs_proj = Project(name="GetSatisfaction Support Status", build_status=status, coverage_url=gs_url, ned_url="sadf")
-        projects.append(gs_proj)
+        
+        
+        projects.extend(get_getsat_modules())
         template_values = {
                      'projects': projects,
                      'append_siren': append_siren,
@@ -418,13 +406,63 @@ class QueryData(webapp.RequestHandler):
         self.response.out.write( json.encode(final_json) )
 
 
-def get_getsat_open_items():
+class GetSatList(webapp.RequestHandler):
+    def get(self):
+        topics = []
+        data = get_getsat_modules(return_raw_json=True)
+        template_vals = {"data": data}
+        path = os.path.join(os.path.dirname(__file__), 'getsat.html')
+        self.response.out.write(template.render(path, template_vals))
+
+
+
+def get_getsat_modules(return_raw_json=False):
     data = None
-    url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&style=problem,question&needs_attention=true"
-    result = urlfetch.fetch(url)
+    una_url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&style=problem,question&status=none,pending,active&limit=100"
+    result = urlfetch.fetch(una_url)
+    projects = []
     if result.status_code == 200:
-      data = json.loads(result.content)
+      unanswered_data = clean_getsat_data(json.loads(result.content))
+      unanswered_data["type"] = "Unanswered"   
+      if return_raw_json:
+          projects.append(unanswered_data)
+      else:
+          projects.append(create_getsat_module(unanswered_data, "New"))
+
+    open_url = "https://api.getsatisfaction.com/companies/socialize/topics.json?style=problem,question&status=none,pending,active&limit=49"
+    result = urlfetch.fetch(open_url)
+    if result.status_code == 200:
+      open_data = clean_getsat_data(json.loads(result.content))
+      open_data["type"] = "Open/Active"
+      if return_raw_json:
+          projects.append(open_data)
+      else:
+          projects.append(create_getsat_module(open_data, "Open"))
+
+    return projects
+
+def clean_getsat_data(data):
+    for topic in data["data"]:
+        date_obj = topic["last_active_at"]
+        date_obj = time.mktime(time.strptime(date_obj, "%Y/%m/%d %H:%M:%S +0000"))
+        date_obj = datetime.datetime.fromtimestamp(date_obj)
+        topic["last_active_at"] = date_obj
+    data["data"] = sorted(data["data"], key=lambda x: x["last_active_at"] )
     return data
+
+def create_getsat_module(data, type_name):
+    status = "NO TOPICS"
+    now = datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))    
+    if data and len(data["data"]) > 0:
+      last_active = now - data["data"][0]["last_active_at"]
+      last_active_hours = last_active.seconds/60/60
+      last_active_hours = last_active_hours + (last_active.days*24)
+      color = "yellow"
+      if last_active_hours > 24:
+          color = "red"
+      status = """<span style="color:%s;vertical-align: middle;">%s %s TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;">(%sH)</span></span>""" % (color, data["total"], type_name.upper(), last_active_hours)
+    gs_proj = Project(name="GetSatisfaction Support (%s Topics)" % type_name, build_status=status, coverage_url="/getsat_list", ned_url="sadf")
+    return gs_proj
     
 def send_getsat_post(content, topic_id=2700076):
     username = ""
@@ -453,7 +491,8 @@ def main():
                                         ('/coverage_report', CoverageReport),
                                         ('/reloader', Reloader),
                                         ('/api/check_for_update', CheckForUpdate),
-                                        ('/query_data', QueryData)
+                                        ('/query_data', QueryData),
+                                        ('/getsat_list', GetSatList)
                                         ],
                                          debug=True)
     util.run_wsgi_app(application)
