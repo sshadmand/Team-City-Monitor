@@ -148,7 +148,10 @@ def get_code_coverage(projects):
             
             #iOS based coverage
             elif project.build_type in ["bt8", "bt5"]:
-                project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/index.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)     
+                artdir = ""
+                if project.build_type == "bt5":
+                    artdir = "combined/"
+                project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/%sindex.html" % (settings.BASE_TC_URL, project.build_type, project.build_id, artdir)     
                 soup = get_url_as_soup(project.coverage_url)
                 if soup:
                     project.coverage = float(soup.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
@@ -437,7 +440,7 @@ def get_getsat_modules(return_raw_json=False):
       if return_raw_json:
           projects.append(open_data)
       else:
-          projects.append(create_getsat_module(open_data, "Open", warning_time_limit_hours=168, problem_time_limit_hours=288))
+          projects.append(create_getsat_module(open_data, "Open", warning_time_limit_hours=100, problem_time_limit_hours=200))
 
     return projects
 
