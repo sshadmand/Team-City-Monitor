@@ -1,5 +1,5 @@
 body {background-color:#191919;color:#CCC;font-family: Arial,Tahoma, Geneva, sans-serif;padding:20px;text-align:center;font-size:1.5em;}
-.stats {width:1000px;margin:auto;height:1500px;}
+.stats {margin:auto;}
 .stats li {margin:10px;background:#232526 url(/images/widget_grad.png) no-repeat 100% 0;
 			text-align:center;width:300px;float:left;list-style: none;border: 1px solid black;-moz-box-shadow: 5px 5px 5px #111;
 			-webkit-box-shadow: 5px 5px 5px #111;box-shadow: 5px 5px 5px #111;}
@@ -18,3 +18,19 @@ a {text-decoration:none;color:#CCC;}
 a:hover {border-bottom:1px solid #444;color:#000;}
 #ajax-status {position:absolute;padding:5px;margin:0;background-color:#444;color:#999;display:none;opacity:.8;}
 #last-updated {font-size:.6em;color:#444;}
+
+.stats li.mini {height:90px;}
+.stats li.mini p{margin:0;padding:0;font-size:1em;}
+.stats li.mini div.mod-body {padding:6px;font-size:.6em;}
+.stats li.mini p.coverage{display:none;}
+.stats li.mini p.coverage-diff{display:none;}
+.stats li.mini p.coverage-diff img{display:none;}
+.stats li.mini div.mod-footer {padding: 7px 7px;font-size: .6em;}
+
+
+.stats li.error {background: red;border: 2px solid darkRed;}
+.stats li.error div.mod-footer {background: red;}
+.stats li.error div.mod-footer a {color: #CCC;}
+.stats li.error div.mod-header a {color: #EEE;}
+.stats li.error a {}
+.stats li.error div.mod-body {color: #DDD !important;border-top: 1px solid #CCC;border-bottom: 1px solid #CCC;}

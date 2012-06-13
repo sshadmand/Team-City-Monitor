@@ -60,18 +60,18 @@
 <div id="last-updated">{{last_loaded}}</div>
 <ol class='stats'>
 	{% for project in projects %}
-	<li {{project.coverage_color_state}} {%ifequal forloop.counter 4 %}style="clear:both;"{%endifequal%}>
+	<li  class="{%if not project.show_coverage%}mini{%endif%} {%if project.coverage_color_state %}error{%endif%}">
 		<div class="mod-header">
 			<p><a href="{{project.ned_url}}" target="_blank">{{project.name}}</a></p>
 		</div>
 		<div class="mod-body" >
-			{% if project.show_coverage %}
+			
 			<p class="coverage"><span style='color:{{project.coverage_color}};'>{{project.coverage}}%</span></p>
 			<p class="coverage-diff">
 				<img src="/images/ico_{{project.change_is}}_x.png" style="height:22px">
 				<span title="average over the last 7 reports">{{project.avg_coverage_change}}</span>
 			</p>
-			{%endif%}
+			
 			<p style="clear:both;">{{project.build_status}}</p>
 		</div>
 		<div class="mod-footer">
