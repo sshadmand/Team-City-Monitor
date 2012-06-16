@@ -336,7 +336,7 @@ class CoverageReport(webapp.RequestHandler):
             append_siren = ""
             #create alerts (visual and audio) if there is a failure
             if project.build_status != "SUCCESS":
-                project.coverage_color_state = "style='background: red;border: 2px solid darkRed;margin: 9px;'"
+                project.coverage_color_state = "error"
                 project.coverage_color = "#FF9999"
                 append_siren = self.get_siren_embed();
 
@@ -347,6 +347,7 @@ class CoverageReport(webapp.RequestHandler):
         
         
         projects.extend(get_getsat_modules())
+        projects.extend(get_deamon_modules())
         template_values = {
                      'projects': projects,
                      'append_siren': append_siren,
@@ -417,31 +418,65 @@ class GetSatList(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'getsat.html')
         self.response.out.write(template.render(path, template_vals))
 
-
-
+def get_deamon_modules():
+    modules = []
+    try:
+        url = "http://ops.getsocialize.com:8100/manage/daemon/"
+        result = urlfetch.fetch(url)
+        deamons = json.loads(result.content)
+        for deamon in deamons:
+            status = "RUNNING"
+            process_id = deamon["process_id"]
+            server = deamon["server_environment"]
+            title = deamon["title"]
+            name = "Deamon: %s - %s" % (title, server.upper())
+            project = Project(name=name, coverage_url="http://ops.getsocialize.com:8100/manage/")
+            if process_id < 0:       
+                status = "STOPPED"
+                project.coverage_color_state = "warning"
+            project.build_status = status
+            project.ned_url="http://ops.getsocialize.com:8100/manage/"
+        
+            modules.append(project)
+    except:
+        project = Project(name="Ops Deamon Manager", coverage_url="http://ops.getsocialize.com:8100/manage/")
+        project.coverage_color_state = "error"
+        project.build_status = "NOT RESPONDING"
+        project.ned_url="http://ops.getsocialize.com:8100/manage/"
+        modules.append(project)
+        
+    return modules
+        
 def get_getsat_modules(return_raw_json=False):
     data = None
-    una_url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&style=problem,question&status=none,pending,active&limit=100"
-    result = urlfetch.fetch(una_url)
     projects = []
-    if result.status_code == 200:
-      unanswered_data = clean_getsat_data(json.loads(result.content))
-      unanswered_data["type"] = "Unanswered"   
-      if return_raw_json:
-          projects.append(unanswered_data)
-      else:
-          projects.append(create_getsat_module(unanswered_data, "New"))
+    try:
+        una_url = "https://api.getsatisfaction.com/companies/socialize/topics.json?sort=unanswered&style=problem,question&status=none,pending,active&limit=100"
+        result = urlfetch.fetch(una_url)
+        if result.status_code == 200:
+          unanswered_data = clean_getsat_data(json.loads(result.content))
+          unanswered_data["type"] = "Unanswered"   
+          if return_raw_json:
+              projects.append(unanswered_data)
+          else:
+              projects.append(create_getsat_module(unanswered_data, "New"))
+        open_url = "https://api.getsatisfaction.com/companies/socialize/topics.json?style=problem,question&status=none,pending,active&limit=49"
+        result = urlfetch.fetch(open_url)
+        if result.status_code == 200:
+          open_data = clean_getsat_data(json.loads(result.content))
+          open_data["type"] = "Open/Active"
+          if return_raw_json:
+              projects.append(open_data)
+          else:
+              projects.append(create_getsat_module(open_data, "Open", warning_time_limit_hours=100, problem_time_limit_hours=200))
+    except:
+        project = Project(name="Get Satisfaction API", coverage_url="https://api.getsatisfaction.com/companies/socialize/topics.json")
+        project.coverage_color_state = "warning"
+        project.build_status = "NOT RESPONDING"
+        project.ned_url="https://api.getsatisfaction.com/companies/socialize/topics.json"
+        modules.append(project)
 
-    open_url = "https://api.getsatisfaction.com/companies/socialize/topics.json?style=problem,question&status=none,pending,active&limit=49"
-    result = urlfetch.fetch(open_url)
-    if result.status_code == 200:
-      open_data = clean_getsat_data(json.loads(result.content))
-      open_data["type"] = "Open/Active"
-      if return_raw_json:
-          projects.append(open_data)
-      else:
-          projects.append(create_getsat_module(open_data, "Open", warning_time_limit_hours=100, problem_time_limit_hours=200))
-
+        
     return projects
 
 def clean_getsat_data(data):
@@ -470,7 +505,8 @@ def create_getsat_module(data, type_name, warning_time_limit_hours=24, problem_t
       if last_active_total_hours < 48:
           last_active_human = "%sH" % (str(last_active_total_hours) )          
       status = """<span style="color:%s;vertical-align: middle;">%s %s TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;">(%s)</span></span>""" % (color, data["total"], type_name.upper(), last_active_human)
-    gs_proj = Project(name="GetSatisfaction Support (%s Topics)" % type_name, build_status=status, coverage_url="/getsat_list", ned_url="sadf")
+    gs_proj = Project(name="GetSatisfaction Support (%s Topics)" % type_name, build_status=status, coverage_url="/getsat_list")
+    gs_proj.ned_url="/getsat_list"
     return gs_proj
     
 def send_getsat_post(content, topic_id=2700076):

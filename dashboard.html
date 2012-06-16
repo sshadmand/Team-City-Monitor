@@ -60,7 +60,7 @@
 <div id="last-updated">{{last_loaded}}</div>
 <ol class='stats'>
 	{% for project in projects %}
-	<li  class="{%if not project.show_coverage%}mini{%endif%} {%if project.coverage_color_state %}error{%endif%}">
+	<li  class="{%if not project.show_coverage%}mini{%endif%} {{project.coverage_color_state|default:""}}">
 		<div class="mod-header">
 			<p><a href="{{project.ned_url}}" target="_blank">{{project.name}}</a></p>
 		</div>
@@ -98,8 +98,10 @@
 	{%endcomment%}
 </ol>
 <br style="clear:both;">
-<p>Brought to you by the developers of Socialize, Inc. <a href="http://www.getsocialize.com">http://www.getsocialize.com</a></p>
-<p><a href="/api/check_for_update">Reload data</a></p>
+<div id="page-footer">
+	<p>Brought to you by the developers of Socialize, Inc. <a href="http://www.getsocialize.com">http://www.getsocialize.com</a></p>
+	<p><a href="/api/check_for_update">Reload data</a></p>
+</div>
 
 {{append_siren}}
 </body>
