@@ -51,6 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE, DAMMIT.
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
 import time
+import logging
 import urllib2, urllib
 from BeautifulSoup import BeautifulSoup
 import re, os
@@ -162,15 +163,23 @@ def get_build_ids_to_track():
     
 def get_latest_builds(as_list=True):
     bts = get_build_ids_to_track()
+    
+    # p = db.Query(Project)
+    #    p.filter('build_type in', bts)
+    #    p.filter('latest =', True)
+    #    p.order('-build_number')
+    #    all_builds = p.fetch(50)
 
-    p = db.Query(Project)
-    p.filter('build_type in', bts)
-    p.filter('latest =', True)
-    p.order('-build_number')
-    all_builds = p.fetch(50)
-
-    #print(len(all_builds))
-
+    all_builds = []
+    for build_type in bts:
+        p = db.Query(Project)
+        p.filter('latest =', True)
+        p.order('-build_number')
+        p.filter('build_type =', build_type)
+        build = p.fetch(1)
+        if len(build) > 0:
+            all_builds.append(build[0])
+    
     builds_dicts = {}
     for build in all_builds:
         builds_dicts.update({build.build_type:build})
@@ -409,7 +418,25 @@ class QueryData(webapp.RequestHandler):
             final_json["objects"].append(entity)
         self.response.out.write( json.encode(final_json) )
 
+class BulkDelete(webapp.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        continue_deleting = True
+        try:
+            while continue_deleting:
+                q = db.GqlQuery("SELECT __key__ FROM Project")
 
+                if q.count() == 0:
+                    continue_deleting = False
+                else:
+                    db.delete(q.fetch(200))
+                    logging.info("Deleted 200 entries")
+                    time.sleep(0.5)
+        except Exception, e:
+            self.response.out.write(repr(e)+'\n')
+            pass
+        self.response.out.write("done")
+    
 class GetSatList(webapp.RequestHandler):
     def get(self):
         topics = []
@@ -508,7 +535,9 @@ def create_getsat_module(data, type_name, warning_time_limit_hours=24, problem_t
     gs_proj = Project(name="GetSatisfaction Support (%s Topics)" % type_name, build_status=status, coverage_url="/getsat_list")
     gs_proj.ned_url="/getsat_list"
     return gs_proj
-    
+
+
+
 def send_getsat_post(content, topic_id=2700076):
     username = ""
     password = ""
@@ -537,7 +566,8 @@ def main():
                                         ('/reloader', Reloader),
                                         ('/api/check_for_update', CheckForUpdate),
                                         ('/query_data', QueryData),
-                                        ('/getsat_list', GetSatList)
+                                        ('/getsat_list', GetSatList),
+                                        ('/bulk_delete', BulkDelete)
                                         ],
                                          debug=True)
     util.run_wsgi_app(application)
