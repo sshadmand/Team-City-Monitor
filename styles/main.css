@@ -57,6 +57,32 @@ a:hover {border-bottom:1px solid #444;color:#000;}
 .stats li.warning a {}
 .stats li.warning div.mod-body {color: #000 !important;border-top: 1px solid #CCC;border-bottom: 1px solid #CCC;}
 
+.stats li.paused {opacity:.5;}
+.stats li.paused.error {opacity:.3;}
+
+.stats li.paused div.mod-paused {
+    opacity: .5;
+    position: absolute;
+    background: #AAA;
+    text-align: center;
+    color: white;
+    width: 300px;
+    height: 120px;
+    padding-top: 80px;
+    font-weight: bold;
+    text-shadow: 1px 1px 5px #555;
+    font-size: 40px;
+}
+
+.stats li.paused.error div.mod-paused {
+    opacity: .8;
+}
+    
+.stats li.paused.mini div.mod-paused {
+    height: 68px;
+    padding-top: 22px;
+}
+
 #page-footer {margin-top:200px;color:#555;}
 #page-footer a {color:#555;border-bottom:1px solid #555;}
 #page-footer a:hover {color:#DDD;border-bottom:1px solid #DDD;}

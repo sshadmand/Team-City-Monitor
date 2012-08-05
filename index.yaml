@@ -67,3 +67,8 @@ indexes:
   - name: latest
   - name: build_number
     direction: desc
+
+- kind: TrackedBuild
+  properties:
+  - name: track_type
+  - name: order_id

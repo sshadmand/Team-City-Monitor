@@ -60,7 +60,12 @@
 <div id="last-updated">{{last_loaded}}</div>
 <ol class='stats'>
 	{% for project in projects %}
-	<li  class="{%if not project.show_coverage%}mini{%endif%} {{project.coverage_color_state|default:""}}">
+	<li  class="{%if not project.show_coverage%}mini{%endif%} {{project.coverage_color_state|default:""}} {%if project.paused%}paused{%endif%}">
+		{%if project.paused%}
+		<div class="mod-paused">
+			PAUSED
+		</div>
+		{%endif%}
 		<div class="mod-header">
 			<p><a href="{{project.ned_url}}" target="_blank">{{project.name}}</a></p>
 		</div>

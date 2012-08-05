@@ -63,7 +63,7 @@ import emailer
 from google.appengine.api import urlfetch
 from django.utils import simplejson as json
 
-#TODO: should be called BuildLog
+
 class Project(db.Model):
     date = db.DateTimeProperty(auto_now_add=True)
     name = db.StringProperty()
@@ -82,6 +82,18 @@ class Project(db.Model):
     latest = db.BooleanProperty(default=False)
     def to_dict(self):
         return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
+
+class TrackedBuild(db.Model):
+    build_id = db.StringProperty()
+    track_type = db.IntegerProperty()
+    order_id = db.IntegerProperty()
+    paused = db.BooleanProperty(default=False)
+    def __str__(self):
+        return self.build_id
+    def to_dict(self):
+        return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
+
+
 
 def get_url_as_soup(theurl):
     try:
@@ -158,40 +170,46 @@ def get_code_coverage(projects):
                     project.coverage = float(soup.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
     return projects 
 
-def get_build_ids_to_track():
-    return settings.TRACKED_BUILD_IDS
+def get_build_ids_to_track(as_list=False):
+    tb = db.Query(TrackedBuild)
+    tb.order("order_id")
+    tracked_builds = tb.fetch(50)
+    if as_list:
+        tracked_builds_list = []
+        for tb in tracked_builds:
+            tracked_builds_list.append(tb.build_id)
+        tracked_builds = tracked_builds_list
+    return tracked_builds
     
 def get_latest_builds(as_list=True):
     bts = get_build_ids_to_track()
-    
-    # p = db.Query(Project)
-    #    p.filter('build_type in', bts)
-    #    p.filter('latest =', True)
-    #    p.order('-build_number')
-    #    all_builds = p.fetch(50)
 
     all_builds = []
-    for build_type in bts:
+    builds_dicts = {}
+    latest_builds = []
+    #pull builds form data store from list of builds to track
+    #and create dictionary by build type id of each build
+    #to pull data needed on build easily
+    for build_to_track in bts:
         p = db.Query(Project)
         p.filter('latest =', True)
         p.order('-build_number')
-        p.filter('build_type =', build_type)
+        p.filter('build_type =', build_to_track.build_id)
         build = p.fetch(1)
         if len(build) > 0:
-            all_builds.append(build[0])
-    
-    builds_dicts = {}
-    for build in all_builds:
-        builds_dicts.update({build.build_type:build})
-
-    latest_builds = []
-    for build_type in bts:
-        if build_type in builds_dicts:
-            latest_builds.append(builds_dicts[build_type])
+            build = build[0]
+            build.tracking_type = build_to_track.track_type
+            build.paused = build_to_track.paused
+            builds_dicts.update({build.build_type:build})
+            latest_builds.append(builds_dicts[build_to_track.build_id])            
+        #if the build is not yet in data store create project place holder
         else:
-            project = Project(build_type=build_type, latest=True)
+            project = Project(build_type=build_to_track.build_id, latest=True)
+            project.tracking_type = build_to_track.track_type
+            project.paused = build_to_track.paused
             latest_builds.append(project)
-            builds_dicts.update({build_type:project})
+            builds_dicts.update({build_to_track.build_id:project})
+            
     if as_list:
         return latest_builds
     else:
@@ -215,6 +233,8 @@ class CheckForUpdate(webapp.RequestHandler):
     def update_projects(self, builds_dict):
         projects = get_all_build_states()
         projects = get_code_coverage(projects)
+        tracked_builds = get_build_ids_to_track(as_list=True)
+        
         for project in projects:
             
             #if there has been a build since the last save
@@ -230,7 +250,7 @@ class CheckForUpdate(webapp.RequestHandler):
             #only persist when there are no duplicates in db
             #and there are no problems getting build info
             #the the build was succesful
-            if not same_build and project.build_status != "problem" and project.build_type in settings.TRACKED_BUILD_IDS:
+            if not same_build and project.build_status != "problem" and project.build_type in tracked_builds:
                 
                 print "new build to save..."
                 #new build to save. 
@@ -314,7 +334,7 @@ class CoverageReport(webapp.RequestHandler):
             p = db.Query(Project)
             #p.filter("date >", datetime.datetime.now() - datetime.timedelta(days=30))
             p.filter("build_status =", "SUCCESS")
-            p.filter("build_type =", bt)
+            p.filter("build_type =", bt.build_id)
             p.order("-date")
             build_stats = p.fetch(10)
             #group and associate builds and coverage qty
@@ -338,9 +358,10 @@ class CoverageReport(webapp.RequestHandler):
             
     def get(self):
         projects = get_latest_builds()
-
+ 
+         
         for project in projects:
-            if not (project.build_type in settings.TRACK_STATUS_ONLY_BUILD_IDS):
+            if project.tracking_type == 0:
                 project.show_coverage = True
             append_siren = ""
             #create alerts (visual and audio) if there is a failure
@@ -359,7 +380,7 @@ class CoverageReport(webapp.RequestHandler):
         projects.extend(get_deamon_modules())
         template_values = {
                      'projects': projects,
-                     'append_siren': append_siren,
+                     #'append_siren': append_siren,
                      #'coverage_graph': coverage_graph,
                      #'graph_range': graph_range,
                      'google_api_key': settings.GOOGLE_API_KEY,
@@ -417,6 +438,35 @@ class QueryData(webapp.RequestHandler):
         for entity in entities:
             final_json["objects"].append(entity)
         self.response.out.write( json.encode(final_json) )
+
+
+
+
+class InitializeSystem(webapp.RequestHandler):
+    def get(self):
+        build_ids_full = settings.TRACKED_BUILD_IDS_FULL
+        build_ids_status_only = settings.TRACK_STATUS_ONLY_BUILD_IDS
+        response = ""
+        
+        for (counter, build) in enumerate(build_ids_full):
+            tb = TrackedBuild()
+            tb.build_id = build
+            tb.track_type = 0
+            tb.order_id = counter * 10
+            tb.put()
+            response = response + "<p>Added %s type:Full Coverage</p>" % build
+
+        for (counter, build) in enumerate(build_ids_status_only):
+            tb = TrackedBuild()
+            tb.build_id = build
+            tb.track_type = 1
+            tb.order_id = (counter + 10) * 10
+            tb.put()
+            response = response + "<p>Added %s type:Status Only</p>" % build
+            
+        self.response.out.write(response + "<p>....done</done>")
+            
+        
 
 class BulkDelete(webapp.RequestHandler):
     def get(self):
@@ -566,8 +616,10 @@ def main():
                                         ('/reloader', Reloader),
                                         ('/api/check_for_update', CheckForUpdate),
                                         ('/query_data', QueryData),
+                                        ('/init', InitializeSystem),                                        
                                         ('/getsat_list', GetSatList),
                                         ('/bulk_delete', BulkDelete)
+                                        
                                         ],
                                          debug=True)
     util.run_wsgi_app(application)
