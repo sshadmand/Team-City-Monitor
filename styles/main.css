@@ -1,6 +1,6 @@
 body {background-color:#191919;color:#CCC;font-family: Arial,Tahoma, Geneva, sans-serif;padding:20px;text-align:center;font-size:1.5em;}
 .stats {margin:auto;}
-.stats li {margin:10px;background:#232526 url(/images/widget_grad.png) no-repeat 100% 0;
+.stats li {margin:11px;background:#232526 url(/images/widget_grad.png) no-repeat 100% 0;
 			text-align:center;width:300px;float:left;list-style: none;border: 1px solid black;-moz-box-shadow: 5px 5px 5px #111;
 			-webkit-box-shadow: 5px 5px 5px #111;box-shadow: 5px 5px 5px #111;}
 .stats li p{margin:0;padding:0;font-size:1em}

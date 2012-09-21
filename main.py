@@ -378,6 +378,7 @@ class CoverageReport(webapp.RequestHandler):
         
         projects.extend(get_getsat_modules())
         projects.extend(get_deamon_modules())
+        projects.extend(get_ads_server_modules())
         template_values = {
                      'projects': projects,
                      #'append_siren': append_siren,
@@ -523,7 +524,31 @@ def get_deamon_modules():
         modules.append(project)
         
     return modules
-        
+
+def get_ads_server_modules():
+    modules = []
+    server = "prod"
+    title = "Socialize Ads"  
+    cache_panel = "http://ads.getsocialize.com/adserver/cache_panel"          
+    name = "Bidder: %s - %s" % (title, server.upper())
+    project = Project(name=name, coverage_url=cache_panel, ned_url=cache_panel)
+    try:
+        url = "http://ads.getsocialize.com/adserver/turn_bidder_on"
+        result = urlfetch.fetch(url)
+        bidder = json.loads(result.content)
+        status = "RUNNING"
+        is_bidder_on = bidder["is_bidder_on"]
+        if is_bidder_on <= 0:       
+            status = "STOPPED"
+            project.coverage_color_state = "warning"
+        project.build_status = status
+    except:
+        project.coverage_color_state = "error"
+        project.build_status = "NOT RESPONDING"
+
+    modules.append(project)
+
+    return modules       
 def get_getsat_modules(return_raw_json=False):
     data = None
     projects = []
