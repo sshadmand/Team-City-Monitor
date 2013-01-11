@@ -532,19 +532,28 @@ def get_ads_server_modules():
     cache_panel = "http://ads.getsocialize.com/adserver/cache_panel"          
     name = "Bidder: %s - %s" % (title, server.upper())
     project = Project(name=name, coverage_url=cache_panel, ned_url=cache_panel)
+
+    result = None
     try:
-        url = "http://ads.getsocialize.com/adserver/turn_bidder_on"
+        url = "http://ads.getsocialize.com/adserver/turn_bidder_on?buster=%s" % time.mktime(time.gmtime())
         result = urlfetch.fetch(url)
-        bidder = json.loads(result.content)
-        status = "RUNNING"
-        is_bidder_on = bidder["is_bidder_on"]
-        if is_bidder_on <= 0:       
-            status = "STOPPED"
-            project.coverage_color_state = "warning"
-        project.build_status = status
-    except Exception, ex:
+        logging.info("RESULTS:%s" % result.content)
+    except:
         project.coverage_color_state = "error"
-        project.build_status = "NOT RESPONDING <div style='display:none;'>%s</div>" % ex
+        project.build_status = "FETCH FAILED"
+        
+    if result:    
+        try:        
+            bidder = json.loads(result.content)
+            status = "RUNNING"
+            is_bidder_on = bidder["is_bidder_on"]
+            if is_bidder_on <= 0:       
+                status = "STOPPED"
+                project.coverage_color_state = "warning"
+            project.build_status = status
+        except Exception, ex:
+            project.coverage_color_state = "error"
+            project.build_status = "NOT RESPONDING <div style='display:none;'>%s, %s</div>" % (ex, result)
 
     modules.append(project)
 
