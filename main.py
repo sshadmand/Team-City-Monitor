@@ -542,9 +542,9 @@ def get_ads_server_modules():
             status = "STOPPED"
             project.coverage_color_state = "warning"
         project.build_status = status
-    except:
+    except Exception, ex:
         project.coverage_color_state = "error"
-        project.build_status = "NOT RESPONDING"
+        project.build_status = "NOT RESPONDING <div style='display:none;'>%s</div>" % ex
 
     modules.append(project)
 
