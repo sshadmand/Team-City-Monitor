@@ -48,7 +48,8 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE, DAMMIT.
 """
-from google.appengine.ext import webapp
+#from google.appengine.ext import webapp
+import webapp2
 from google.appengine.ext.webapp import util
 import time
 import logging
@@ -146,7 +147,7 @@ def get_code_coverage(projects):
             #Coverage reports are different for each platform.
             
             #PYTHON/Django based coverage
-            if project.build_type in ["bt6", "bt28"]: 
+            if project.build_type in ["bt6", "bt28", "bt39"]: 
                 project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/index.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)     
                 soup = get_url_as_soup(project.coverage_url)
                 if soup:
@@ -216,7 +217,7 @@ def get_latest_builds(as_list=True):
         return builds_dicts
 
   
-class CheckForUpdate(webapp.RequestHandler):
+class CheckForUpdate(webapp2.RequestHandler):
     def needs_build_updated(self, build_type, build_number):
         if build_type and build_number:
             url = "%s/httpAuth/app/rest/builds/?locator=buildType:%s,sinceBuild:%s" % (settings.BASE_TC_URL, build_type, build_number)
@@ -314,7 +315,7 @@ class CheckForUpdate(webapp.RequestHandler):
 
             
         
-class CoverageReport(webapp.RequestHandler):
+class CoverageReport(webapp2.RequestHandler):
         
     def get_siren_embed(self):
         embed = settings.EMBED_SOUND_HTML
@@ -377,7 +378,7 @@ class CoverageReport(webapp.RequestHandler):
         
         
         projects.extend(get_getsat_modules())
-        projects.extend(get_deamon_modules())
+        #projects.extend(get_deamon_modules())
         projects.extend(get_ads_server_modules())
         template_values = {
                      'projects': projects,
@@ -390,13 +391,13 @@ class CoverageReport(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'dashboard.html')
         self.response.out.write(template.render(path, template_values))
 
-class Reloader(webapp.RequestHandler):
+class Reloader(webapp2.RequestHandler):
     def get(self):
         template_values = {}
         path = os.path.join(os.path.dirname(__file__), 'reloader.html')
         self.response.out.write(template.render(path, template_values))
         
-class MainHandler(webapp.RequestHandler):
+class MainHandler(webapp2.RequestHandler):
     def get(self):
         template_values = {}
         path = os.path.join(os.path.dirname(__file__), 'index.html')
@@ -415,7 +416,7 @@ def get_date_from_string(date_str):
         dt = datetime.datetime.fromtimestamp(mktime(struct))
     return dt
     
-class QueryData(webapp.RequestHandler):
+class QueryData(webapp2.RequestHandler):
     def get(self):
         import json
         import simplejson
@@ -443,7 +444,7 @@ class QueryData(webapp.RequestHandler):
 
 
 
-class InitializeSystem(webapp.RequestHandler):
+class InitializeSystem(webapp2.RequestHandler):
     def get(self):
         build_ids_full = settings.TRACKED_BUILD_IDS_FULL
         build_ids_status_only = settings.TRACK_STATUS_ONLY_BUILD_IDS
@@ -469,7 +470,7 @@ class InitializeSystem(webapp.RequestHandler):
             
         
 
-class BulkDelete(webapp.RequestHandler):
+class BulkDelete(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
         continue_deleting = True
@@ -488,7 +489,7 @@ class BulkDelete(webapp.RequestHandler):
             pass
         self.response.out.write("done")
     
-class GetSatList(webapp.RequestHandler):
+class GetSatList(webapp2.RequestHandler):
     def get(self):
         topics = []
         data = get_getsat_modules(return_raw_json=True)
@@ -585,7 +586,7 @@ def get_getsat_modules(return_raw_json=False):
         project.coverage_color_state = "warning"
         project.build_status = "NOT RESPONDING"
         project.ned_url="https://api.getsatisfaction.com/companies/socialize/topics.json"
-        modules.append(project)
+        projects.append(project)
 
         
     return projects
@@ -615,7 +616,7 @@ def create_getsat_module(data, type_name, warning_time_limit_hours=24, problem_t
       last_active_human = "%sD:%sH" % (str(last_active_days), str(last_active_hours) )
       if last_active_total_hours < 48:
           last_active_human = "%sH" % (str(last_active_total_hours) )          
-      status = """<span style="color:%s;vertical-align: middle;">%s %s TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;">(%s)</span></span>""" % (color, data["total"], type_name.upper(), last_active_human)
+      status = '<span style="color:%s;vertical-align: middle;">%s %s TOPICS<span style="font-size:12px;vertical-align:middle;padding-left:5px;">(%s)</span></span>' % (color, data["total"], type_name.upper(), last_active_human)
     gs_proj = Project(name="GetSatisfaction Support (%s Topics)" % type_name, build_status=status, coverage_url="/getsat_list")
     gs_proj.ned_url="/getsat_list"
     return gs_proj
@@ -642,8 +643,8 @@ def send_getsat_post(content, topic_id=2700076):
     return data
 
 
-def main():
-    application = webapp.WSGIApplication([
+
+app = webapp2.WSGIApplication([
                                         #('/', MainHandler),
                                         ('/', CoverageReport),
                                         ('/coverage_report', CoverageReport),
@@ -656,8 +657,7 @@ def main():
                                         
                                         ],
                                          debug=True)
-    util.run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-    main()
+#old code
+#    util.run_wsgi_app(application)
+#if __name__ == '__main__':
+#    main()

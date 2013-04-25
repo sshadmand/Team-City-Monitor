@@ -58,6 +58,8 @@
 
 <div id="ajax-status"></div>
 <div id="last-updated">{{last_loaded}}</div>
+
+{% autoescape off %}
 <ol class='stats'>
 	{% for project in projects %}
 	<li  class="{%if not project.show_coverage%}mini{%endif%} {{project.coverage_color_state|default:""}} {%if project.paused%}paused{%endif%}">
@@ -102,6 +104,8 @@
 	</li>
 	{%endcomment%}
 </ol>
+{% endautoescape %}
+
 <br style="clear:both;">
 <div id="page-footer">
 	<p>Brought to you by the developers of Socialize, Inc. <a href="http://www.getsocialize.com">http://www.getsocialize.com</a></p>
