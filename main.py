@@ -643,17 +643,29 @@ def send_getsat_post(content, topic_id=2700076):
     return data
 
 
+class TrackedBuilds(webapp2.RequestHandler):
+    def get(self):
+        tbs = db.Query(TrackedBuild)
+#        query = query.filter("date <", end_date)
+        final_json = {"meta":{"total_count":tbs.count()},"coverage":[], "status":[]}
+        for tb in tbs:
+            if tb.track_type == 0:
+                final_json["status"].append(tb.build_id)
+            else:
+                final_json["coverage"].append(tb.build_id)
+        self.response.out.write( json.dumps(final_json) )
 
 app = webapp2.WSGIApplication([
                                         #('/', MainHandler),
-                                        ('/', CoverageReport),
+                                        ('/', MainHandler),
                                         ('/coverage_report', CoverageReport),
                                         ('/reloader', Reloader),
                                         ('/api/check_for_update', CheckForUpdate),
                                         ('/query_data', QueryData),
                                         ('/init', InitializeSystem),                                        
                                         ('/getsat_list', GetSatList),
-                                        ('/bulk_delete', BulkDelete)
+                                        ('/bulk_delete', BulkDelete),
+                                        ('/get_tracked_builds', TrackedBuilds)
                                         
                                         ],
                                          debug=True)

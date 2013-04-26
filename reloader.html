@@ -1,3 +1,17 @@
 <html>
-<body style="background-color:#232526;border-bottom:1px solid #000;padding-top:4px;font-family: Arial,Tahoma, Geneva, sans-serif;color:#444;"></body>
+<head>
+	<script>
+	var seconds = 1000
+	var minutes = 60 * seconds
+	
+	function reloadFrame(){
+		top.frames['coverage_report'].location.reload();
+		window.setTimeout(reloadFrame, 10 * minutes);
+	}
+	window.setTimeout(reloadFrame, 10 * minutes);
+	</script>
+</head>
+<body style="background-color:#232526;border-bottom:1px solid #000;padding-top:4px;font-family: Arial,Tahoma, Geneva, sans-serif;color:#444;">
+	
+</body>
 </html>

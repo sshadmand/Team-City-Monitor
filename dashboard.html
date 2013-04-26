@@ -4,9 +4,10 @@
 <html lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<meta http-equiv="refresh" content="300">
+<!--	<meta http-equiv="refresh" content="300"> -->
 	<title>dashboard</title>
 	<LINK REL=StyleSheet HREF="/styles/main.css" TYPE="text/css" MEDIA=screen>
+	<!--
 		<script type="text/javascript" src="http://www.google.com/jsapi?key={{google_api_key}}"></script> 
 
 		<script type="text/javascript"> 
@@ -15,8 +16,8 @@
 
 		function initCharts() {
 			id = document.getElementById('chart1')
-			var raw_data = {{coverage_graph}};
-			var time = {{graph_range}};
+			var raw_data = {{coverage_graph|default:"0"}};
+			var time = {{graph_range|default:"0"}};
 			drawVisualization(raw_data, time, "builds", id)
 		}  
 
@@ -43,9 +44,9 @@
 		  new google.visualization.LineChart(id).
 		      draw(data,options);
 		}
-
+		
 		</script>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+		<script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
 		<script>
 
 		$(document).ready(function() {
@@ -53,11 +54,12 @@
 	 	});
 
 		</script>
+		-->
 </head>
 <body>
 
 <div id="ajax-status"></div>
-<div id="last-updated">{{last_loaded}}</div>
+<div id="last-updated">Last Loaded: <span id="load-time">{{last_loaded}}</span></div>
 
 {% autoescape off %}
 <ol class='stats'>
