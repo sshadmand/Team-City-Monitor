@@ -121,8 +121,6 @@ def get_url_as_soup(theurl):
     
 def get_projects():
     projects = []
-    #get build types and names
-    #soup = get_url_as_soup("%s/httpAuth/app/rest/buildTypes" % settings.BASE_TC_URL)
 
     bc = BuilderConnect(BuilderConnect.TEAM_CITY)
     buildtypes = bc.get_build_types()
@@ -140,8 +138,6 @@ def get_all_build_states():
     
     for project in projects:
         try:
-            #theurl = '%s/httpAuth/app/rest/buildTypes/id:%s/builds/' % (settings.BASE_TC_URL, project.build_type)
-            #soup = get_url_as_soup(theurl)
             bc = BuilderConnect(BuilderConnect.TEAM_CITY)
             builds = bc.get_build_states(project.build_type)
             
@@ -162,30 +158,19 @@ def get_code_coverage(projects):
             
             #PYTHON/Django based coverage
             if project.build_type in ["bt6", "bt28", "bt39"]: 
-                #project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/index.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)     
-                #soup = get_url_as_soup(project.coverage_url)
-                coverage_report = bc.get_coverage_report(project.build_type, project.build_id, "index.html")
-                if coverage_report:
-                    project.coverage = float(coverage_report.find("span", { "class" : "pc_cov" }).contents[0].replace("%", ""))
+                project.coverage = bc.get_coverage(project.build_type, project.build_id, "python", "index.html")
             
             #ANDROID based coverage
             elif project.build_type in ["bt7", "bt4", "bt2"]:
-                #project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/coverage.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)      
-                #soup = get_url_as_soup(project.coverage_url)
-                coverage_report = bc.get_coverage_report(project.build_type, project.build_id, "coverage.html")
-                if coverage_report:
-                    project.coverage = float(coverage_report.findAll("td")[5].contents[0].encode('ascii','ignore').split("(")[0].strip().replace("%", ""))
+                project.coverage = bc.get_coverage(project.build_type, project.build_id, "android", "coverage.html")
             
             #iOS based coverage
             elif project.build_type in ["bt8", "bt5"]:
                 artdir = ""
                 if project.build_type == "bt5":
                     artdir = "combined/"
-                #project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/%sindex.html" % (settings.BASE_TC_URL, project.build_type, project.build_id, artdir)     
-                #soup = get_url_as_soup(project.coverage_url)
-                coverage_report = bc.get_coverage_report(project.build_type, project.build_id, "%s/index.html" % artdir)
-                if coverage_report:
-                    project.coverage = float(coverage_report.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
+                project.coverage = bc.get_coverage(project.build_type, project.build_id, "ios", "%s/index.html" % artdir)
+
     return projects 
 
 def get_build_ids_to_track(as_list=False):
