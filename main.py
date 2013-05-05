@@ -63,6 +63,10 @@ import settings
 import emailer
 from google.appengine.api import urlfetch
 from django.utils import simplejson as json
+from builder_connect import BuilderConnect
+
+from builder_connect import BuilderConnect
+
 
 
 class Project(db.Model):
@@ -80,6 +84,7 @@ class Project(db.Model):
     coverage_change_indicator = ""
     coverage_color_state = ""
     ned_url = ""
+    builder = db.StringProperty(default="TCM")
     latest = db.BooleanProperty(default=False)
     def to_dict(self):
         return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
@@ -114,11 +119,15 @@ def get_url_as_soup(theurl):
     except:
         return None
     
-def get_build_types():
+def get_projects():
     projects = []
     #get build types and names
-    soup = get_url_as_soup("%s/httpAuth/app/rest/buildTypes" % settings.BASE_TC_URL)
-    for bt in soup.buildtypes:
+    #soup = get_url_as_soup("%s/httpAuth/app/rest/buildTypes" % settings.BASE_TC_URL)
+
+    bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+    buildtypes = bc.get_build_types()
+
+    for bt in buildtypes:
         p = Project()
         p.name = bt['name']
         p.build_type = bt['id']
@@ -126,16 +135,19 @@ def get_build_types():
     return projects
     
 def get_all_build_states():
-    projects = get_build_types()
+    projects = get_projects()
     new_projects = []
     
     for project in projects:
         try:
-            theurl = '%s/httpAuth/app/rest/buildTypes/id:%s/builds/' % (settings.BASE_TC_URL, project.build_type)
-            soup = get_url_as_soup(theurl)
-            project.build_status = soup.builds.build['status']
-            project.build_number = int(soup.builds.build['number'])
-            project.build_id = int(soup.builds.build['id'])
+            #theurl = '%s/httpAuth/app/rest/buildTypes/id:%s/builds/' % (settings.BASE_TC_URL, project.build_type)
+            #soup = get_url_as_soup(theurl)
+            bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+            builds = bc.get_build_states(project.build_type)
+            
+            project.build_status = builds.build['status']
+            project.build_number = int(builds.build['number'])
+            project.build_id = int(builds.build['id'])
         except:
             project.build_status = "problem"
             
@@ -146,29 +158,34 @@ def get_code_coverage(projects):
         if project.build_status != "problem":
             #Coverage reports are different for each platform.
             
+            bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+            
             #PYTHON/Django based coverage
             if project.build_type in ["bt6", "bt28", "bt39"]: 
-                project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/index.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)     
-                soup = get_url_as_soup(project.coverage_url)
-                if soup:
-                    project.coverage = float(soup.find("span", { "class" : "pc_cov" }).contents[0].replace("%", ""))
+                #project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/index.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)     
+                #soup = get_url_as_soup(project.coverage_url)
+                coverage_report = bc.get_coverage_report(project.build_type, project.build_id, "index.html")
+                if coverage_report:
+                    project.coverage = float(coverage_report.find("span", { "class" : "pc_cov" }).contents[0].replace("%", ""))
             
             #ANDROID based coverage
             elif project.build_type in ["bt7", "bt4", "bt2"]:
-                project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/coverage.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)      
-                soup = get_url_as_soup(project.coverage_url)
-                if soup:
-                    project.coverage = float(soup.findAll("td")[5].contents[0].encode('ascii','ignore').split("(")[0].strip().replace("%", ""))
+                #project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/coverage.html" % (settings.BASE_TC_URL, project.build_type, project.build_id)      
+                #soup = get_url_as_soup(project.coverage_url)
+                coverage_report = bc.get_coverage_report(project.build_type, project.build_id, "coverage.html")
+                if coverage_report:
+                    project.coverage = float(coverage_report.findAll("td")[5].contents[0].encode('ascii','ignore').split("(")[0].strip().replace("%", ""))
             
             #iOS based coverage
             elif project.build_type in ["bt8", "bt5"]:
                 artdir = ""
                 if project.build_type == "bt5":
                     artdir = "combined/"
-                project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/%sindex.html" % (settings.BASE_TC_URL, project.build_type, project.build_id, artdir)     
-                soup = get_url_as_soup(project.coverage_url)
-                if soup:
-                    project.coverage = float(soup.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
+                #project.coverage_url = "%s/httpAuth/repository/download/%s/%s:id/%sindex.html" % (settings.BASE_TC_URL, project.build_type, project.build_id, artdir)     
+                #soup = get_url_as_soup(project.coverage_url)
+                coverage_report = bc.get_coverage_report(project.build_type, project.build_id, "%s/index.html" % artdir)
+                if coverage_report:
+                    project.coverage = float(coverage_report.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
     return projects 
 
 def get_build_ids_to_track(as_list=False):
@@ -218,18 +235,7 @@ def get_latest_builds(as_list=True):
 
   
 class CheckForUpdate(webapp2.RequestHandler):
-    def needs_build_updated(self, build_type, build_number):
-        if build_type and build_number:
-            url = "%s/httpAuth/app/rest/builds/?locator=buildType:%s,sinceBuild:%s" % (settings.BASE_TC_URL, build_type, build_number)
-            soup = get_url_as_soup(url)
-            response = False
-            if soup:
-                change_count = soup.find("builds")
-                if int(change_count["count"]) > 0:
-                    response = True
-            return response
-        else:
-            return True
+
 
     def update_projects(self, builds_dict):
         projects = get_all_build_states()
@@ -298,7 +304,6 @@ class CheckForUpdate(webapp2.RequestHandler):
             print "...."
             
     def get(self):
-
         #if there has been a build since the last save
         builds_dict = get_latest_builds(as_list=False)
 
@@ -306,8 +311,9 @@ class CheckForUpdate(webapp2.RequestHandler):
         for build_dict in builds_dict:
 
             build = builds_dict[build_dict]
-
-            has_updated = self.needs_build_updated(build.build_type, build.build_number)
+            
+            bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+            has_updated = bc.has_new_builds(build.build_type, build.build_number)
             if has_updated:
                 self.update_projects(builds_dict)
                 self.response.out.write("pushed new builds")

@@ -2,10 +2,15 @@ EMAIL_SENDER = "Team City Monitor <you@you.com>"
 
 #Your TeamCity Base URL. No trailing slash. Example: http://www.yourname.com
 BASE_TC_URL = "http://www.yourdomain.com"
-
 #Team City user login information
 TC_USERNAME = "admin"
 TC_PW = "..."
+
+#Your Jenkins Base URL. No trailing slash. Example: http://www.yourname.com
+BASE_TC_URL = ""
+#Jenkins user login information
+JENKINS_USERNAME = ""
+JENKINS_PASWORD = ""
 
 #HTML <EMBED> code of a sound file to play if there is a build error
 #Example: <embed src="http://www.sounds.com/yoursound.wav"  autoplay="true" autostart="True" type="audio/wav" style="width:1px;height:1px" loop="true" />"""
