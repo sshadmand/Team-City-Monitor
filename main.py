@@ -361,9 +361,11 @@ class CoverageReport(webapp2.RequestHandler):
                 project.coverage_color_state = "error"
                 project.coverage_color = "#FF9999"
                 append_siren = self.get_siren_embed();
-
-            project.ned_url = """%s/viewType.html?buildTypeId=%s&tab=buildTypeStatusDiv""" % (settings.BASE_TC_URL, project.build_type)
             
+            bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+            project.ned_url = bc.get_project_url(project.build_type)
+
+
         #coverage_graph, graph_range = self.get_coverage_graph()
         
         
