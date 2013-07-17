@@ -17,9 +17,15 @@ JENKINS_PASWORD = ""
 EMBED_SOUND_HTML = """<embed src="yoursound.wav"  autoplay="true" autostart="True" type="audio/wav" style="width:1px;height:1px" loop="true" />"""
 
 #List of TeamCity build ids that you want to track
-TRACK_STATUS_ONLY_BUILD_IDS = ["bt19"]
-TRACKED_BUILD_IDS = ["bt2", "bt4", "bt5", "bt6", "bt7", "bt8"]
+#this is loaded into the data store with the /init script
+TRACK_STATUS_ONLY_BUILD_IDS = ["bt13", "bt11", "bt17", "bt30", "bt33", "bt32", "bt7", "bt40" ] #"bt36", "bt26",
+TRACKED_BUILD_IDS_FULL = ["bt4", "bt5", "bt6", "bt28", "bt2", "bt8", "bt39"  ]
+
+TRACKED_BUILD_IDS = []
+TRACKED_BUILD_IDS.extend(TRACKED_BUILD_IDS_FULL)
 TRACKED_BUILD_IDS.extend(TRACK_STATUS_ONLY_BUILD_IDS)
+
+TRACKED_JENKINS_BUILD_NAMES = ["socialize-website-production"]
 
 #Google API key used to generate graphs. 
 #You may need to generate your own if you have not already done so on google

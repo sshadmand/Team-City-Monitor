@@ -83,8 +83,7 @@ class Project(db.Model):
     change_is = db.StringProperty(default="")
     coverage_change_indicator = ""
     coverage_color_state = ""
-    ned_url = ""
-    builder = db.StringProperty(default="TCM")
+    ned_url = db.StringProperty(default="")
     latest = db.BooleanProperty(default=False)
     def to_dict(self):
         return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
@@ -94,6 +93,7 @@ class TrackedBuild(db.Model):
     track_type = db.IntegerProperty()
     order_id = db.IntegerProperty()
     paused = db.BooleanProperty(default=False)
+    builder = db.StringProperty(default="teamcity")
     def __str__(self):
         return self.build_id
     def to_dict(self):
@@ -161,7 +161,7 @@ def get_code_coverage(projects):
                 project.coverage = bc.get_coverage(project.build_type, project.build_id, "python", "index.html")
             
             #ANDROID based coverage
-            elif project.build_type in ["bt7", "bt4", "bt2"]:
+            elif project.build_type in ["bt7", "bt4", "bt2", "bt42"]:
                 project.coverage = bc.get_coverage(project.build_type, project.build_id, "android", "coverage.html")
             
             #iOS based coverage
@@ -212,7 +212,8 @@ def get_latest_builds(as_list=True):
             project.paused = build_to_track.paused
             latest_builds.append(project)
             builds_dicts.update({build_to_track.build_id:project})
-            
+    
+                  
     if as_list:
         return latest_builds
     else:
@@ -370,9 +371,12 @@ class CoverageReport(webapp2.RequestHandler):
         
         
         
+        projects.extend(get_jenkins_modules())
+        
         projects.extend(get_getsat_modules())
         #projects.extend(get_deamon_modules())
         projects.extend(get_ads_server_modules())
+
         template_values = {
                      'projects': projects,
                      #'append_siren': append_siren,
@@ -551,7 +555,78 @@ def get_ads_server_modules():
 
     modules.append(project)
 
-    return modules       
+    return modules
+    
+    
+def get_jenkins_modules():
+    project_modules = []
+    project_names = settings.TRACKED_JENKINS_BUILD_NAMES
+    for project_name in project_names:
+        build_info = get_jenkins_build_info(project_name)
+        deploy_info = get_jenkins_deploy_info(project_name, build_info["build_no"])
+        data = {
+                "display_name": build_info["display_name"],
+                "project_name": project_name,
+                "build_status": build_info["status"],
+                "deploy_status": deploy_info["status"],
+                "color": "green",
+                }
+        project_modules.append( create_jenkins_project(data) )
+    return project_modules
+
+def get_jenkins_build_info(project_name):
+    project_data_url = "http://jenkins.sharethis.com:8080/job/%s/api/json" % project_name
+    project_data = urllib2.urlopen(project_data_url).read()
+    project_json = json.loads(project_data)
+    health_report = project_json["healthReport"][0]
+    latest_build = project_json["builds"][0]
+    project_display_name = project_json["displayName"]
+    #print health_report
+    #print latest_build
+
+    latest_build_no = latest_build["number"]
+
+    #print latest_build_no
+
+    build_data_url = "http://23.21.170.88:8080/job/socialize-website-production/%s/api/json" % (latest_build_no)
+    build_data = urllib2.urlopen(build_data_url).read()
+
+    build_data_json = json.loads(build_data)
+    #print build_data_json["result"]
+    
+    build_info = {
+                "status": build_data_json["result"],
+                "display_name": project_display_name,
+                "build_no": build_data_json["number"],
+                }
+    return build_info
+    
+def get_jenkins_deploy_info(project_name, build_no):    
+    console_log_url = "http://jenkins.sharethis.com:8080/job/%s/%s/consoleText" % (project_name, build_no)
+    console_log = urllib2.urlopen(console_log_url).read()
+    m = re.search("\{.*status.*\}", console_log)
+    auto_deploy_response = m.group(0)
+    auto_deploy_response_json = json.loads(auto_deploy_response)
+
+    return auto_deploy_response_json
+    
+    
+def create_jenkins_project(data):
+    base_project_url = "http://jenkins.sharethis.com:8080/job/" + data["project_name"]
+    build_status = data["build_status"].upper() 
+    deploy_status = data["deploy_status"].upper()
+    
+    if build_status != "SUCCESS":
+        color = "red"
+    if deploy_status != "SUCCESS":
+        color = "yellow"
+    
+    status = """Build: %s / Deploy: %s""" % (build_status, deploy_status)
+
+    jenkins_project = Project(name="JENKINS: " + data["display_name"], build_status=status, ned_url=base_project_url, coverage_url=base_project_url + "/changes")
+    return jenkins_project
+        
+        
 def get_getsat_modules(return_raw_json=False):
     data = None
     projects = []

@@ -1,0 +1,29 @@
+<html>
+<body>
+	
+
+	
+	
+	<table>
+	{% for grouping in data %}
+		<tr>
+			<td colspan="3">
+				{% ifequal grouping.data|length 0  %}
+					0
+				{% else %}
+					{{grouping.total}}
+				{% endifequal %}
+				<b>{{grouping.type}}</b></td>
+		</tr>
+		{% for topic in grouping.data %}
+			<tr>
+				
+				<td>&nbsp;&nbsp;<span style="color:#CCC;">{{forloop.counter}}</span> {{topic.style|capfirst}}:</td>
+				<td><a href="{{topic.at_sfn}}" target="_blank">{{topic.subject}}</a></td>
+				<td>Last responded {{topic.last_active_at|timesince}} ago</td>
+			</tr>
+		{% endfor %}		
+	{% endfor %}
+	</table>
+</body>
+</html>
