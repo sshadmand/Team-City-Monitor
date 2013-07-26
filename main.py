@@ -77,7 +77,7 @@ class Project(db.Model):
     build_number = db.IntegerProperty()
     build_status = db.StringProperty()
     coverage = db.FloatProperty(default=0.0)
-    coverage_url = db.StringProperty()
+    coverage_url = db.StringProperty(default="#")
     avg_coverage_change = db.FloatProperty(default=0.0)
     coverage_color = db.StringProperty(default="green")
     change_is = db.StringProperty(default="")
@@ -158,18 +158,18 @@ def get_code_coverage(projects):
             
             #PYTHON/Django based coverage
             if project.build_type in ["bt6", "bt28", "bt39"]: 
-                project.coverage = bc.get_coverage(project.build_type, project.build_id, "python", "index.html")
+                project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "python", "index.html")
             
             #ANDROID based coverage
             elif project.build_type in ["bt7", "bt4", "bt2", "bt42"]:
-                project.coverage = bc.get_coverage(project.build_type, project.build_id, "android", "coverage.html")
+                project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "android", "coverage.html")
             
             #iOS based coverage
             elif project.build_type in ["bt8", "bt5"]:
                 artdir = ""
                 if project.build_type == "bt5":
                     artdir = "combined/"
-                project.coverage = bc.get_coverage(project.build_type, project.build_id, "ios", "%s/index.html" % artdir)
+                project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "ios", "%s/index.html" % artdir)
 
     return projects 
 
@@ -365,6 +365,7 @@ class CoverageReport(webapp2.RequestHandler):
             
             bc = BuilderConnect(BuilderConnect.TEAM_CITY)
             project.ned_url = bc.get_project_url(project.build_type)
+            #project.coverage_url = "#end"
 
 
         #coverage_graph, graph_range = self.get_coverage_graph()

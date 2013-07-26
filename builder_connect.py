@@ -57,7 +57,7 @@ class BuilderConnect(object):
                 elif platform == "ios":
                     coverage = float(coverage_report.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
             
-            return coverage
+            return coverage, url
                 
         
     def __get_data(self, theurl):
