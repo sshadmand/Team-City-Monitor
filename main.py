@@ -77,7 +77,7 @@ class Project(db.Model):
     build_number = db.IntegerProperty()
     build_status = db.StringProperty()
     coverage = db.FloatProperty(default=0.0)
-    coverage_url = db.StringProperty(default="#")
+    coverage_url = db.StringProperty()
     avg_coverage_change = db.FloatProperty(default=0.0)
     coverage_color = db.StringProperty(default="green")
     change_is = db.StringProperty(default="")
@@ -365,7 +365,8 @@ class CoverageReport(webapp2.RequestHandler):
             
             bc = BuilderConnect(BuilderConnect.TEAM_CITY)
             project.ned_url = bc.get_project_url(project.build_type)
-            #project.coverage_url = "#end"
+            if not project.coverage_url:
+                project.coverage_url = project.ned_url
 
 
         #coverage_graph, graph_range = self.get_coverage_graph()
