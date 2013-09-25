@@ -269,7 +269,8 @@ class CheckForUpdate(webapp2.RequestHandler):
                     count = count + 1.0
                 if count > 0:
                     project.avg_coverage_change = round(average/count, 1)
-                    change_in_avg =  project.coverage - project.avg_coverage_change
+                    if project.coverage:
+                        change_in_avg =  project.coverage - project.avg_coverage_change
                 if change_in_avg < 0:
                     project.change_is = "down"
                 if change_in_avg > 0:
