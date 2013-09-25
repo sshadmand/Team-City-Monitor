@@ -161,7 +161,7 @@ def get_code_coverage(projects):
                 project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "python", "index.html")
             
             #ANDROID based coverage
-            elif project.build_type in ["bt7", "bt4", "bt2", "bt42"]:
+            elif project.build_type in ["bt7", "bt4", "bt2", "bt42" ,"bt43" ]:
                 project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "android", "coverage.html")
             
             #iOS based coverage
@@ -607,8 +607,11 @@ def get_jenkins_deploy_info(project_name, build_no):
     console_log_url = "http://jenkins.sharethis.com:8080/job/%s/%s/consoleText" % (project_name, build_no)
     console_log = urllib2.urlopen(console_log_url).read()
     m = re.search("\{.*status.*\}", console_log)
-    auto_deploy_response = m.group(0)
-    auto_deploy_response_json = json.loads(auto_deploy_response)
+    auto_deploy_response = ""
+    auto_deploy_response_json = "{}"
+    if m:
+        auto_deploy_response = m.group(0)
+        auto_deploy_response_json = json.loads(auto_deploy_response)
 
     return auto_deploy_response_json
     
