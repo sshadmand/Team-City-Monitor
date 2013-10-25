@@ -1,27 +1,27 @@
 body {background-color:#191919;color:#CCC;font-family: Arial,Tahoma, Geneva, sans-serif;padding:20px;text-align:center;font-size:1.5em;}
 .stats {margin:auto;}
 .stats li {margin:11px;background:#232526 url(/images/widget_grad.png) no-repeat 100% 0;
-			text-align:center;width:300px;float:left;list-style: none;border: 1px solid black;-moz-box-shadow: 5px 5px 5px #111;
+			text-align:center;width:412px;float:left;list-style: none;border: 1px solid black;-moz-box-shadow: 5px 5px 5px #111;
 			-webkit-box-shadow: 5px 5px 5px #111;box-shadow: 5px 5px 5px #111;}
 .stats li p{margin:0;padding:0;font-size:1em}
 .stats li div.mod-header p {
-    color:#555;
+    color:#DDD;
     text-align:left;
-    font-size:.6em;
+    font-size:.8em;
     padding:5px 20px;
     border-bottom:1px solid #151617;
     border-top:1px solid #323434;
-    height: 17px;}
+    height: 23px;}
 .stats li div.mod-header p a {
-    color:#555;
-    max-width: 250px;
+    color:#DDD;
+    /* max-width: 250px; */
     overflow: hidden;
     text-align: ;
     text-overflow: ellipsis;
     white-space: nowrap;
     display: inline-block;
 }
-.stats li div.mod-body {color:#555;border-top:1px solid #323434;border-bottom:1px solid #151617;padding:10px;}
+.stats li div.mod-body {color:#999;border-top:1px solid #323434;border-bottom:1px solid #151617;padding:10px;}
 .stats li p.coverage{font-size:3.0em;float:left;width:212px}
 .stats li p.coverage-diff{font-size:3.5em;float:left;font-size:1em;width:48px;padding:10px;text-align:center;}
 .stats li p.coverage-diff img{margin-bottom:4px;}
@@ -34,7 +34,7 @@ a:hover {border-bottom:1px solid #444;color:#000;}
 #ajax-status {position:absolute;padding:5px;margin:0;background-color:#444;color:#999;display:none;opacity:.8;}
 #last-updated {font-size:.6em;color:#444;}
 
-.stats li.mini {height:90px;}
+.stats li.mini {height:91px;}
 .stats li.mini p{margin:0;padding:0;font-size:1em;}
 .stats li.mini div.mod-body {padding:6px;font-size:.6em;}
 .stats li.mini p.coverage{display:none;}

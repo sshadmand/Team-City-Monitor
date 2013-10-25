@@ -165,10 +165,10 @@ def get_code_coverage(projects):
                 project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "android", "coverage.html")
             
             #iOS based coverage
-            elif project.build_type in ["bt8", "bt5"]:
+            elif project.build_type in ["bt8", "bt5", "bt44"]:
                 artdir = ""
-                if project.build_type == "bt5":
-                    artdir = "combined/"
+                if project.build_type == "bt5" or project.build_type == "bt44":
+                    artdir = "combined"
                 project.coverage, project.coverage_url = bc.get_coverage(project.build_type, project.build_id, "ios", "%s/index.html" % artdir)
 
     return projects 
@@ -264,9 +264,12 @@ class CheckForUpdate(webapp2.RequestHandler):
                 change_in_avg = 0.0
                 count = 0.0
                 history = p.fetch(7)
-                for last in history:                
-                    average = last.coverage + average
-                    count = count + 1.0
+                for last in history:
+                    try:              
+                        average = last.coverage + average
+                        count = count + 1.0
+                    except:
+                        print "Error calculating covereage change"
                 if count > 0:
                     project.avg_coverage_change = round(average/count, 1)
                     if project.coverage:
@@ -567,12 +570,17 @@ def get_jenkins_modules():
     for project_name in project_names:
         build_info = get_jenkins_build_info(project_name)
         deploy_info = get_jenkins_deploy_info(project_name, build_info["build_no"])
+
+
+        if build_info["status"] == "FAILURE":
+            deploy_info = {"status":"Deployed Stopped"}
+
+        
         data = {
                 "display_name": build_info["display_name"],
                 "project_name": project_name,
                 "build_status": build_info["status"],
                 "deploy_status": deploy_info["status"],
-                "color": "green",
                 }
         project_modules.append( create_jenkins_project(data) )
     return project_modules
@@ -622,14 +630,14 @@ def create_jenkins_project(data):
     build_status = data["build_status"].upper() 
     deploy_status = data["deploy_status"].upper()
     
-    if build_status != "SUCCESS":
-        color = "red"
-    if deploy_status != "SUCCESS":
-        color = "yellow"
+    if build_status != "SUCCESS" or deploy_status != "SUCCESS":
+        status = "error"
+    
     
     status = """Build: %s / Deploy: %s""" % (build_status, deploy_status)
 
     jenkins_project = Project(name="JENKINS: " + data["display_name"], build_status=status, ned_url=base_project_url, coverage_url=base_project_url + "/changes")
+    jenkins_project.coverage_color_state="error"
     return jenkins_project
         
         

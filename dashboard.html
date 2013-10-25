@@ -64,6 +64,7 @@
 {% autoescape off %}
 <ol class='stats'>
 	{% for project in projects %}
+	<!-- {{project.coverage_color_state}} -->
 	<li  class="{%if not project.show_coverage%}mini{%endif%} {{project.coverage_color_state|default:""}} {%if project.paused%}paused{%endif%}">
 		{%if project.paused%}
 		<div class="mod-paused">

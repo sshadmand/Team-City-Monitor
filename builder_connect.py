@@ -45,7 +45,8 @@ class BuilderConnect(object):
     
     def get_coverage(self, build_type, build_id, platform, path):
         if self.system == self.TEAM_CITY:
-            url = "%s/httpAuth/repository/download/%s/%s:id/%s" % (settings.BASE_TC_URL, build_type, build_id, path)     
+            url = "%s/httpAuth/repository/download/%s/%s:id/%s" % (settings.BASE_TC_URL, build_type, build_id, path)
+            print "Checking %s" % url
             coverage_report = self.__get_data(url)
             coverage = None
             
@@ -56,6 +57,7 @@ class BuilderConnect(object):
                     coverage = float(coverage_report.findAll("td")[5].contents[0].encode('ascii','ignore').split("(")[0].strip().replace("%", ""))
                 elif platform == "ios":
                     coverage = float(coverage_report.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
+                    print "ios coverage for %s platform is %s" % (platform, coverage)
             
             return coverage, url
                 
