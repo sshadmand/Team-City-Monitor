@@ -565,42 +565,53 @@ def get_jenkins_modules():
     project_names = settings.TRACKED_JENKINS_BUILD_NAMES
     for project_name in project_names:
         build_info = get_jenkins_build_info(project_name)
-        deploy_info = get_jenkins_deploy_info(project_name, build_info["build_no"])
-        data = {
-                "display_name": build_info["display_name"],
-                "project_name": project_name,
-                "build_status": build_info["status"],
-                "deploy_status": deploy_info["status"],
-                "color": "green",
-                }
-        project_modules.append( create_jenkins_project(data) )
+        if len(build_info) > 0:
+            deploy_info = get_jenkins_deploy_info(project_name, build_info["build_no"])
+            data = {
+                    "display_name": build_info["display_name"],
+                    "project_name": project_name,
+                    "build_status": build_info["status"],
+                    "deploy_status": deploy_info["status"],
+                    "color": "green",
+                    }
+            project_modules.append( create_jenkins_project(data) )
     return project_modules
 
 def get_jenkins_build_info(project_name):
     project_data_url = "http://jenkins.sharethis.com:8080/job/%s/api/json" % project_name
-    project_data = urllib2.urlopen(project_data_url).read()
-    project_json = json.loads(project_data)
-    health_report = project_json["healthReport"][0]
-    latest_build = project_json["builds"][0]
-    project_display_name = project_json["displayName"]
-    #print health_report
-    #print latest_build
-
-    latest_build_no = latest_build["number"]
-
-    #print latest_build_no
-
-    build_data_url = "http://23.21.170.88:8080/job/socialize-website-production/%s/api/json" % (latest_build_no)
-    build_data = urllib2.urlopen(build_data_url).read()
-
-    build_data_json = json.loads(build_data)
-    #print build_data_json["result"]
     
-    build_info = {
-                "status": build_data_json["result"],
-                "display_name": project_display_name,
-                "build_no": build_data_json["number"],
-                }
+    project_data = {}
+    
+    try:
+        project_data = urllib2.urlopen(project_data_url).read()
+        project_json = json.loads(project_data)
+        health_report = project_json["healthReport"][0]
+        latest_build = project_json["builds"][0]
+        project_display_name = project_json["displayName"]
+        #print health_report
+        #print latest_build
+
+        latest_build_no = latest_build["number"]
+
+        #print latest_build_no
+
+        build_data_url = "http://23.21.170.88:8080/job/socialize-website-production/%s/api/json" % (latest_build_no)
+        build_data = {}
+        try:
+            build_data = urllib2.urlopen(build_data_url).read()
+        except:
+            pass
+
+        build_data_json = json.loads(build_data)
+        #print build_data_json["result"]
+    
+        build_info = {
+                    "status": build_data_json["result"],
+                    "display_name": project_display_name,
+                    "build_no": build_data_json["number"],
+                    }
+    except:
+        build_info = {}
     return build_info
     
 def get_jenkins_deploy_info(project_name, build_no):    
