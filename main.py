@@ -377,7 +377,7 @@ class CoverageReport(webapp2.RequestHandler):
         
         
         
-        projects.extend(get_jenkins_modules())
+        #projects.extend(get_jenkins_modules())
         
         projects.extend(get_getsat_modules())
         #projects.extend(get_deamon_modules())
@@ -737,6 +737,28 @@ class TrackedBuilds(webapp2.RequestHandler):
                 final_json["coverage"].append(tb.build_id)
         self.response.out.write( json.dumps(final_json) )
 
+class ResetLatestBuilds(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        continue_reset = True
+        try:
+            while continue_reset:
+                q = db.GqlQuery("SELECT * FROM Project where latest=True")
+                total = q.count() 
+                if total == 0:
+                    continue_reset = False
+                else:
+                    latest = q.fetch(200)
+                    for item in latest:
+                        item.latest = False
+                        item.put()
+                    logging.info("RESET %s entries" % total)
+                    time.sleep(0.5)
+        except Exception, e:
+            self.response.out.write(repr(e)+'\n')
+            pass
+        self.response.out.write("done")
+
 app = webapp2.WSGIApplication([
                                         #('/', MainHandler),
                                         ('/', MainHandler),
@@ -747,6 +769,7 @@ app = webapp2.WSGIApplication([
                                         ('/init', InitializeSystem),                                        
                                         ('/getsat_list', GetSatList),
                                         ('/bulk_delete', BulkDelete),
+                                        ('/reset_latest_builds', ResetLatestBuilds),
                                         ('/get_tracked_builds', TrackedBuilds)
                                         
                                         ],
