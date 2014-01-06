@@ -381,7 +381,7 @@ class CoverageReport(webapp2.RequestHandler):
         
         projects.extend(get_getsat_modules())
         #projects.extend(get_deamon_modules())
-        projects.extend(get_ads_server_modules())
+        #projects.extend(get_ads_server_modules())
 
         template_values = {
                      'projects': projects,
