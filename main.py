@@ -224,6 +224,8 @@ class CheckForUpdate(webapp2.RequestHandler):
 
 
     def update_projects(self, builds_dict):
+        logging.info("Updating projects....")
+        logging.info(builds_dict)
         projects = get_all_build_states()
         projects = get_code_coverage(projects)
         tracked_builds = get_build_ids_to_track(as_list=True)
@@ -303,6 +305,8 @@ class CheckForUpdate(webapp2.RequestHandler):
             build = builds_dict[build_dict]
             
             bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+            logging.info("Checking for build type: %s %s " % (build.build_type, build.build_number) )
+            print "Testing logs"
             has_updated = bc.has_new_builds(build.build_type, build.build_number)
             if has_updated:
                 self.update_projects(builds_dict)
@@ -367,8 +371,13 @@ class CoverageReport(webapp2.RequestHandler):
                 project.coverage_color = "#FF9999"
                 append_siren = self.get_siren_embed();
             
-            bc = BuilderConnect(BuilderConnect.TEAM_CITY)
-            project.ned_url = bc.get_project_url(project.build_type)
+            try:
+                bc = BuilderConnect(BuilderConnect.TEAM_CITY)
+                project.ned_url = bc.get_project_url(project.build_type)
+            except Exception, ex:
+                logging.error("Error connecting to Team City")
+                logging.error(ex)
+
             if not project.coverage_url:
                 project.coverage_url = project.ned_url
 
@@ -402,6 +411,7 @@ class Reloader(webapp2.RequestHandler):
         
 class MainHandler(webapp2.RequestHandler):
     def get(self):
+        logging.error("MAIN HANDLER")
         template_values = {}
         path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.out.write(template.render(path, template_values))

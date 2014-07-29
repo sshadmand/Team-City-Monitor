@@ -1,6 +1,9 @@
 import settings
 import urllib2
 from BeautifulSoup import BeautifulSoup
+from google.appengine.api import urlfetch
+import base64
+import logging
 import re
 
 class BuilderConnect(object):
@@ -51,10 +54,21 @@ class BuilderConnect(object):
             coverage = None
             
             if coverage_report:
+                logging.info("Coverage report for %s" % platform)
                 if platform == "python":
                     coverage = float(coverage_report.find("span", { "class" : "pc_cov" }).contents[0].replace("%", ""))
                 elif platform == "android":
-                    coverage = float(coverage_report.findAll("td")[5].contents[0].encode('ascii','ignore').split("(")[0].strip().replace("%", ""))
+                    
+                    columns = coverage_report.findAll("td")
+                    if len(columns) >= 5:
+                        the_column = columns[5]
+                        column_content = the_column.contents[0]
+                        content_enc = column_content.encode('ascii','ignore')
+                        coverage_str = content_enc.split("(")[0].strip().replace("%", "")
+                        coverage = float(coverage_str)
+                    else:
+                        coverage = None
+
                 elif platform == "ios":
                     coverage = float(coverage_report.findAll(attrs={'class' : re.compile("headerCovTableEntry")})[2].contents[0].strip().replace(" ", "").replace("%", ""))
                     print "ios coverage for %s platform is %s" % (platform, coverage)
@@ -64,12 +78,16 @@ class BuilderConnect(object):
         
     def __get_data(self, theurl):
         try:
-            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            passman.add_password(None, theurl, self.username, self.password)
-            authhandler = urllib2.HTTPBasicAuthHandler(passman)
-            opener = urllib2.build_opener(authhandler)
-            urllib2.install_opener(opener)
-            content = urllib2.urlopen(theurl).read()
+            # passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            # passman.add_password(None, theurl, self.username, self.password)
+            # authhandler = urllib2.HTTPBasicAuthHandler(passman)
+            # opener = urllib2.build_opener(authhandler)
+            # urllib2.install_opener(opener)
+            # content = urllib2.urlopen(theurl).read()
+
+            content = urlfetch.fetch(theurl,
+                        headers={"Authorization": 
+                                 "Basic %s" % base64.b64encode("%s:%s" % (self.username, self.password) )}).content
 
             # authentication is now handled automatically for us
 

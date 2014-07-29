@@ -1,5 +1,5 @@
 application: teamcitymonitor
-version: 8
+version: 9
 runtime: python27
 api_version: 1
 threadsafe: false
@@ -10,13 +10,10 @@ handlers:
 
 - url: /styles
   static_dir: styles
-      
+
 - url: /.*
   script: main.app
-  
+
 libraries:
   - name: django
     version: "1.4"
- 
-
-  
