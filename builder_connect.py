@@ -29,15 +29,30 @@ class BuilderConnect(object):
     def has_new_builds(self, build_type, build_number):
         if build_type and build_number:
             if self.system == self.TEAM_CITY:
-                url = "%s/httpAuth/app/rest/builds/?locator=buildType:%s,sinceBuild:%s" % (settings.BASE_TC_URL, build_type, build_number)
+                logging.info("Checking for new builds....")
+                url = "%s/httpAuth/app/rest/builds/?locator=buildType:%s" % (settings.BASE_TC_URL, build_type)
             
-                builds = self.__get_data(url)
-                response = False
-                if builds:
-                    change_count = builds.find("builds")
-                    if int(change_count["count"]) > 0:
-                        response = True
-                return response
+                builds_xml = self.__get_data(url)
+                logging.info("HAS NEW BUILDS?")
+
+                #if build number is of in DB cant use TC's "since" command. 
+                #fixed by getting all builds and taking newest
+                #TODO: check since build param and if failure use latest code check below.
+                builds = []
+                for build_xml in builds_xml.find("builds"):
+                    builds.append(int(build_xml["number"]))
+                builds = sorted(builds, reverse=True)
+                
+                if len(builds) == 0:
+                    logging.info("YES, HAS NEW BUILDS. No Builds" )
+                    return True
+
+                if builds[0] > int(build_number):
+                    logging.info("YES, HAS NEW BUILDS. Latest build is greater than current.")
+                    return True
+
+                logging.info("NO, DOES NOT HAVE NEW BUILDS.")
+                return False
         else:
             return True
     
@@ -84,12 +99,13 @@ class BuilderConnect(object):
             # opener = urllib2.build_opener(authhandler)
             # urllib2.install_opener(opener)
             # content = urllib2.urlopen(theurl).read()
-
-            content = urlfetch.fetch(theurl,
+            logging.info("Getting data from: %s " % theurl)
+            result = urlfetch.fetch(theurl,
                         headers={"Authorization": 
-                                 "Basic %s" % base64.b64encode("%s:%s" % (self.username, self.password) )}).content
+                                 "Basic %s" % base64.b64encode("%s:%s" % (self.username, self.password) )})
+            logging.info("URL Returned: %s" % result.status_code)
+            content = result.content
 
-            # authentication is now handled automatically for us
 
             soup = BeautifulSoup(content)
 

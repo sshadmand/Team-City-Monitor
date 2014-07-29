@@ -307,6 +307,8 @@ class CheckForUpdate(webapp2.RequestHandler):
             bc = BuilderConnect(BuilderConnect.TEAM_CITY)
             logging.info("Checking for build type: %s %s " % (build.build_type, build.build_number) )
             print "Testing logs"
+
+
             has_updated = bc.has_new_builds(build.build_type, build.build_number)
             if has_updated:
                 self.update_projects(builds_dict)
